@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Plus, CreditCard, ShoppingBag, Utensils } from "lucide-react";
+import { useLiff } from "@/components/providers/LiffProvider";
 
 const expenses = [
   { id: 1, store: "和樂家居", amount: 378, date: "2026/03/01", items: ["不鏽鋼咖啡杯", "環保購物袋"], matched: true },
@@ -10,12 +11,14 @@ const expenses = [
 ];
 
 export default function HomePage() {
+  const { profile } = useLiff();
+
   return (
     <div className="p-6 space-y-8">
       {/* Header */}
       <header className="flex justify-between items-end pt-4">
         <div>
-          <p className="text-muted-foreground text-sm font-medium">👋 你好，Jacky</p>
+          <p className="text-muted-foreground text-sm font-medium">👋 你好，{profile?.displayName || "用戶"}</p>
           <h1 className="text-3xl font-bold tracking-tight text-gradient">記帳明細</h1>
         </div>
         <div className="bg-black dark:bg-white text-white dark:text-black p-3 rounded-2xl shadow-lg">

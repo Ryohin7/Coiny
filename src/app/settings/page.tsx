@@ -2,9 +2,11 @@
 
 import { motion } from "framer-motion";
 import { User, Mail, Shield, Bell, ChevronRight, Copy, ExternalLink } from "lucide-react";
+import { useLiff } from "@/components/providers/LiffProvider";
 
 export default function SettingsPage() {
-  const forwardEmail = "user123@coiny.io";
+  const { profile } = useLiff();
+  const forwardEmail = `${profile?.userId?.substring(0, 8) || "user"}@coiny.io`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(forwardEmail);
@@ -19,11 +21,17 @@ export default function SettingsPage() {
 
       {/* User Profile */}
       <div className="flex items-center gap-4 px-2">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-gray-200 to-gray-400 dark:from-gray-700 dark:to-gray-900 flex items-center justify-center border-2 border-white dark:border-gray-800 shadow-xl">
-          <User size={32} className="text-white" />
+        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white dark:border-gray-800 shadow-xl">
+          {profile?.pictureUrl ? (
+            <img src={profile.pictureUrl} alt={profile.displayName} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-tr from-gray-200 to-gray-400 dark:from-gray-700 dark:to-gray-900 flex items-center justify-center">
+              <User size={32} className="text-white" />
+            </div>
+          )}
         </div>
         <div>
-          <h2 className="text-xl font-bold">Jacky Chen</h2>
+          <h2 className="text-xl font-bold">{profile?.displayName || "載入中..."}</h2>
           <p className="text-xs text-muted-foreground">Premium 帳戶</p>
         </div>
       </div>

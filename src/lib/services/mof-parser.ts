@@ -1,5 +1,5 @@
 import { parse } from "csv-parse/sync";
-import { db } from "@/lib/firebase/admin";
+import { getDb } from "@/lib/firebase/admin";
 import * as admin from "firebase-admin";
 
 interface InvoiceItem {
@@ -62,6 +62,9 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
 }
 
 async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
+  const db = getDb();
+  if (!db) return;
+  
   const batch = db.batch();
 
   // Search for potential manual entries
