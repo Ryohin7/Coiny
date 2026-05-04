@@ -44,6 +44,17 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
           setProfile(profile);
           setUserId(profile.userId);
           setIsLoggedIn(true);
+
+          // Sync user to Firestore
+          await fetch("/api/user/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              lineUserId: profile.userId,
+              displayName: profile.displayName,
+              pictureUrl: profile.pictureUrl,
+            }),
+          });
         } else {
           liff.login();
         }
