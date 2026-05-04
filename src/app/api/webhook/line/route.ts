@@ -1,7 +1,7 @@
 import { messagingApi, webhook } from "@line/bot-sdk";
 import { NextResponse } from "next/server";
 import * as admin from "firebase-admin";
-import { db } from "@/lib/firebase/admin";
+import { getDb } from "@/lib/firebase/admin";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +47,12 @@ export async function POST(req: Request) {
         const dateStr = date.toISOString().split("T")[0].replace(/-/g, "/"); // YYYY/MM/DD
 
         try {
+          const db = getDb();
+          if (!db) {
+            console.error("Database not initialized");
+            continue;
+          }
+
           await db.collection("manual_expenses").add({
             userId,
             amount,
