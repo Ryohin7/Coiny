@@ -19,7 +19,6 @@ export async function GET(req: Request) {
     const manualSnapshot = await db
       .collection("manual_expenses")
       .where("userId", "==", userId)
-      .orderBy("createdAt", "desc")
       .get();
 
     const manualExpenses = manualSnapshot.docs.map(doc => ({
@@ -32,7 +31,6 @@ export async function GET(req: Request) {
     const invoiceSnapshot = await db
       .collection("invoices")
       .where("userId", "==", userId)
-      .orderBy("createdAt", "desc")
       .get();
 
     const invoices = invoiceSnapshot.docs.map(doc => ({
@@ -41,11 +39,11 @@ export async function GET(req: Request) {
       type: "invoice",
     }));
 
-    // Combine and sort by date/createdAt
+    // Combine and sort by createdAt (Handle potential nulls)
     const allRecords = [...manualExpenses, ...invoices].sort((a: any, b: any) => {
-      const dateA = a.createdAt?.toDate?.() || new Date(0);
-      const dateB = b.createdAt?.toDate?.() || new Date(0);
-      return dateB - dateA;
+      const timeA = a.createdAt?.toMillis?.() || (a.createdAt?._seconds * 1000) || 0;
+      const timeB = b.createdAt?.toMillis?.() || (b.createdAt?._seconds * 1000) || 0;
+      return timeB - timeA;
     });
 
     return NextResponse.json({ records: allRecords });
