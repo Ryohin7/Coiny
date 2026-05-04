@@ -29,29 +29,30 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
     const type = row[0]?.toString().trim();
 
     if (type === "M") {
-      // M | Date | Store | InvNum
-      const rawDate = row[1]?.toString().trim() || ""; // 20260301
+      // M | 載具名稱 | 載具號碼 | 發票日期 | 商店統編 | 商店店名 | 發票號碼 | 總金額 | 發票狀態 |
+      const rawDate = row[3]?.toString().trim() || ""; // 20260301
       if (rawDate.length < 8) continue;
       
       const date = `${rawDate.substring(0, 4)}/${rawDate.substring(4, 6)}/${rawDate.substring(6, 8)}`;
-      const store = row[2]?.toString().trim();
-      const invNum = row[3]?.toString().trim();
+      const store = row[5]?.toString().trim() || "未知商店";
+      const invNum = row[6]?.toString().trim();
+      const totalAmount = parseInt(row[7]?.toString().trim()) || 0;
 
       currentInvoice = {
         date,
         store,
         invNum,
         items: [],
-        totalAmount: 0,
+        totalAmount,
       };
       invoices.push(currentInvoice);
     } else if (type === "D" && currentInvoice) {
-      // D | ItemName | Price
-      const name = row[1];
-      const price = parseInt(row[2]) || 0;
+      // D | 發票號碼 | 小計 | 品項名稱 |
+      const name = row[3]?.toString().trim() || "未知品項";
+      const price = parseInt(row[2]?.toString().trim()) || 0;
 
       currentInvoice.items.push({ name, price });
-      currentInvoice.totalAmount += price;
+      // 注意：總金額在 M 欄位已經有了，所以這裡不需要累加，除非 M 欄位為 0
     }
   }
 
