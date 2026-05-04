@@ -8,6 +8,7 @@ interface LiffContextType {
   isLoggedIn: boolean;
   userId: string | null;
   profile: any | null;
+  emailID: string | null;
   error: string | null;
 }
 
@@ -16,6 +17,7 @@ const LiffContext = createContext<LiffContextType>({
   isLoggedIn: false,
   userId: null,
   profile: null,
+  emailID: null,
   error: null,
 });
 
@@ -26,6 +28,7 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
+  const [emailID, setEmailID] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,8 +48,8 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
           setUserId(profile.userId);
           setIsLoggedIn(true);
 
-          // Sync user to Firestore
-          await fetch("/api/user/sync", {
+          // Sync user to Firestore and get emailID
+          const res = await fetch("/api/user/sync", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -55,6 +58,10 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
               pictureUrl: profile.pictureUrl,
             }),
           });
+          const data = await res.json();
+          if (data.emailID) {
+            setEmailID(data.emailID);
+          }
         } else {
           liff.login();
         }
@@ -96,7 +103,7 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
   }
 
   return (
-    <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, error }}>
+    <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, emailID, error }}>
       {children}
     </LiffContext.Provider>
   );

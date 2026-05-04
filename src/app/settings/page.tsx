@@ -5,8 +5,8 @@ import { User, Mail, Shield, Bell, ChevronRight, Copy, ExternalLink } from "luci
 import { useLiff } from "@/components/providers/LiffProvider";
 
 export default function SettingsPage() {
-  const { profile } = useLiff();
-  const forwardEmail = `${profile?.userId?.substring(0, 8) || "user"}@coiny.io`;
+  const { profile, emailID } = useLiff();
+  const forwardEmail = emailID ? `${emailID}@coinyapp.com` : "載入中...";
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(forwardEmail);

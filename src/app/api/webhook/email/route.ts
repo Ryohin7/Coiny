@@ -1,24 +1,44 @@
 import { NextResponse } from "next/server";
 import { parseMOFCSV } from "@/lib/services/mof-parser";
+import { getDb } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const { userId, csvContent } = await req.json();
+    const { userId: emailID, csvContent } = await req.json();
 
-    if (!userId || !csvContent) {
+    if (!emailID || !csvContent) {
+      console.warn("Email Webhook: Missing emailID or csvContent");
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const invoices = await parseMOFCSV(csvContent, userId);
+    const db = getDb();
+    if (!db) throw new Error("DB not initialized");
+
+    // Resolve real lineUserId from emailID
+    const userSnapshot = await db.collection("users").where("emailID", "==", emailID).limit(1).get();
+    
+    if (userSnapshot.empty) {
+      console.error(`Email Webhook: No user found for emailID ${emailID}`);
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const lineUserId = userSnapshot.docs[0].id;
+    console.log(`Email Webhook: Resolved emailID ${emailID} to lineUserId ${lineUserId}`);
+
+    const invoices = await parseMOFCSV(csvContent, lineUserId);
 
     return NextResponse.json({
       success: true,
+      message: `Successfully processed ${invoices.length} invoices`,
       count: invoices.length,
     });
-  } catch (error) {
-    console.error("Email webhook error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Email Webhook Error:", error);
+    return NextResponse.json({ 
+      error: "Internal Server Error", 
+      details: error.message 
+    }, { status: 500 });
   }
 }

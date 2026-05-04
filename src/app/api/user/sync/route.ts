@@ -18,26 +18,36 @@ export async function POST(req: Request) {
     const userRef = db.collection("users").doc(lineUserId);
     const userDoc = await userRef.get();
 
+    let emailID = "";
+
     if (!userDoc.exists) {
+      // Generate unique 10-char emailID
+      emailID = Math.random().toString(36).substring(2, 12).toUpperCase();
+      
       // New User
       await userRef.set({
         lineUserId,
         displayName,
         pictureUrl,
+        emailID,
         membershipLevel: "Free", // Default level
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         lastLogin: admin.firestore.FieldValue.serverTimestamp(),
       });
     } else {
+      const userData = userDoc.data();
+      emailID = userData?.emailID || Math.random().toString(36).substring(2, 12).toUpperCase();
+
       // Update existing user
       await userRef.update({
         displayName,
         pictureUrl,
+        emailID,
         lastLogin: admin.firestore.FieldValue.serverTimestamp(),
       });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, emailID });
   } catch (error: any) {
     console.error("User sync error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
