@@ -16,7 +16,14 @@ interface Invoice {
 }
 
 export async function parseMOFCSV(csvContent: string, userId: string) {
-  const records = parse(csvContent, {
+  // Clean up content: handle common email forwarding artifacts like '>' or leading spaces
+  const cleanedContent = csvContent
+    .split(/\r?\n/)
+    .map(line => line.replace(/^[> \t*]+/, "").trim()) // Remove leading >, spaces, tabs, or *
+    .filter(line => line.startsWith("M|") || line.startsWith("D|"))
+    .join('\n');
+
+  const records = parse(cleanedContent, {
     delimiter: "|",
     relax_column_count: true,
     skip_empty_lines: true,
