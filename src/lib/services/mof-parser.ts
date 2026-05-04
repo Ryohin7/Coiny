@@ -26,14 +26,16 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
   let currentInvoice: Invoice | null = null;
 
   for (const row of records) {
-    const type = row[0];
+    const type = row[0]?.toString().trim();
 
     if (type === "M") {
       // M | Date | Store | InvNum
-      const rawDate = row[1]; // 20260301
+      const rawDate = row[1]?.toString().trim() || ""; // 20260301
+      if (rawDate.length < 8) continue;
+      
       const date = `${rawDate.substring(0, 4)}/${rawDate.substring(4, 6)}/${rawDate.substring(6, 8)}`;
-      const store = row[2];
-      const invNum = row[3];
+      const store = row[2]?.toString().trim();
+      const invNum = row[3]?.toString().trim();
 
       currentInvoice = {
         date,

@@ -16,6 +16,9 @@ export async function POST(req: Request) {
     const db = getDb();
     if (!db) throw new Error("DB not initialized");
 
+    // Debug: Log the first 100 chars of CSV content to verify encoding
+    console.log(`Email Webhook: Received CSV snippet: ${csvContent.substring(0, 100)}...`);
+
     // Resolve real lineUserId from emailID
     const userSnapshot = await db.collection("users").where("emailID", "==", emailID).limit(1).get();
     
