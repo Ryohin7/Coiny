@@ -167,8 +167,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      </div>
-
       {/* Detail Modal */}
       {selectedRecord && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
