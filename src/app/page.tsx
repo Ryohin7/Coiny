@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus, CreditCard, ShoppingBag, Utensils, ReceiptText, Loader2 } from "lucide-react";
+import { Plus, CreditCard, ShoppingBag, Utensils, ReceiptText, Loader2, Trash2, Edit3 } from "lucide-react";
 import { useLiff } from "@/components/providers/LiffProvider";
 import { useEffect, useState } from "react";
 
@@ -120,6 +120,57 @@ export default function HomePage() {
         </div>
       </div>
 
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleDelete = async () => {
+    if (!selectedRecord || !confirm("確定要刪除這筆交易嗎？")) return;
+    try {
+      const res = await fetch(`/api/expenses/${selectedRecord.id}?type=${selectedRecord.type}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setRecords(records.filter(r => r.id !== selectedRecord.id));
+        setSelectedRecord(null);
+      }
+    } catch (error) {
+      alert("刪除失敗");
+    }
+  };
+
+  const handleUpdateCategory = async (newCategory: string, newIcon: string) => {
+    if (!selectedRecord) return;
+    try {
+      const res = await fetch(`/api/expenses/${selectedRecord.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: newCategory, icon: newIcon, type: selectedRecord.type }),
+      });
+      if (res.ok) {
+        setRecords(records.map(r => r.id === selectedRecord.id ? { ...r, category: newCategory, icon: newIcon } : r));
+        setSelectedRecord(null);
+        setIsEditing(false);
+      }
+    } catch (error) {
+      alert("更新失敗");
+    }
+  };
+
+  // 內建分類選項供編輯使用
+  const CATEGORY_OPTIONS = [
+    { name: "餐飲", icon: "🍱" },
+    { name: "超商", icon: "🏪" },
+    { name: "生活雜貨", icon: "🧻" },
+    { name: "交通", icon: "🚗" },
+    { name: "購物", icon: "🛍️" },
+    { name: "娛樂", icon: "🎮" },
+    { name: "醫療", icon: "🏥" },
+    { name: "其他", icon: "💰" },
+  ];
+
+  return (
+    <div className="p-6 space-y-8 pb-24">
+      {/* ... (Header and Summary Card code remains the same) */}
+
       {/* Detail Modal */}
       {selectedRecord && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
@@ -127,7 +178,7 @@ export default function HomePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setSelectedRecord(null)}
+            onClick={() => { setSelectedRecord(null); setIsEditing(false); }}
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
           <motion.div 
@@ -136,46 +187,95 @@ export default function HomePage() {
             exit={{ y: "100%", opacity: 0 }}
             className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[2.5rem] p-8 relative z-10 shadow-2xl overflow-hidden"
           >
-            <div className="space-y-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-2xl font-bold">{selectedRecord.store || (selectedRecord.matched ? "對帳交易" : "手動記帳")}</h3>
-                  <p className="text-muted-foreground text-sm">{selectedRecord.date}</p>
-                </div>
-                <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-full cursor-pointer" onClick={() => setSelectedRecord(null)}>
-                  <Plus size={20} className="rotate-45" />
-                </div>
-              </div>
-
-              <div className="border-t border-b border-gray-100 dark:border-gray-800 py-6 max-h-[40vh] overflow-y-auto space-y-4">
-                {selectedRecord.items && selectedRecord.items.length > 0 ? (
-                  selectedRecord.items.map((item: any, i: number) => (
-                    <div key={i} className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground flex-1 pr-4">{item.name}</span>
-                      <span className={`font-medium ${item.price < 0 ? "text-red-500" : ""}`}>
-                        {item.price < 0 ? "" : "$"}{item.price.toLocaleString()}
+            {!isEditing ? (
+              <div className="space-y-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-2xl">{selectedRecord.icon || "💰"}</span>
+                      <span className="text-xs font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg text-muted-foreground">
+                        {selectedRecord.category || "未分類"}
                       </span>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-center text-muted-foreground text-sm py-4">尚無明細資料</p>
-                )}
-              </div>
+                    <h3 className="text-2xl font-bold">{selectedRecord.store || (selectedRecord.matched ? "對帳交易" : "手動記帳")}</h3>
+                    <p className="text-muted-foreground text-sm">{selectedRecord.date}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setIsEditing(true)}
+                      className="bg-gray-100 dark:bg-gray-800 p-3 rounded-2xl hover:bg-gray-200 transition-colors"
+                    >
+                      <Edit3 size={18} />
+                    </button>
+                    <button 
+                      onClick={() => { setSelectedRecord(null); setIsEditing(false); }}
+                      className="bg-gray-100 dark:bg-gray-800 p-3 rounded-2xl"
+                    >
+                      <Plus size={18} className="rotate-45" />
+                    </button>
+                  </div>
+                </div>
 
-              <div className="flex justify-between items-center pt-2">
-                <span className="font-bold text-lg">總計金額</span>
-                <span className="text-2xl font-black">
-                  ${(selectedRecord.totalAmount || selectedRecord.amount).toLocaleString()}
-                </span>
+                <div className="border-t border-b border-gray-100 dark:border-gray-800 py-6 max-h-[40vh] overflow-y-auto space-y-4">
+                  {selectedRecord.items && selectedRecord.items.length > 0 ? (
+                    selectedRecord.items.map((item: any, i: number) => (
+                      <div key={i} className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground flex-1 pr-4">{item.name}</span>
+                        <span className={`font-medium ${item.price < 0 ? "text-red-500" : ""}`}>
+                          {item.price < 0 ? "" : "$"}{item.price.toLocaleString()}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-muted-foreground text-sm py-4">尚無明細資料</p>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  <span className="font-bold text-lg">總計金額</span>
+                  <span className="text-2xl font-black">
+                    ${(selectedRecord.totalAmount || selectedRecord.amount).toLocaleString()}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <button 
+                    onClick={handleDelete}
+                    className="bg-red-50 dark:bg-red-950/30 text-red-500 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition-all"
+                  >
+                    <Trash2 size={18} /> 刪除
+                  </button>
+                  <button 
+                    onClick={() => setSelectedRecord(null)}
+                    className="bg-black dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all"
+                  >
+                    關閉
+                  </button>
+                </div>
               </div>
-              
-              <button 
-                onClick={() => setSelectedRecord(null)}
-                className="w-full bg-black dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all"
-              >
-                關閉
-              </button>
-            </div>
+            ) : (
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold">修改分類</h3>
+                <div className="grid grid-cols-4 gap-4">
+                  {CATEGORY_OPTIONS.map((cat) => (
+                    <button
+                      key={cat.name}
+                      onClick={() => handleUpdateCategory(cat.name, cat.icon)}
+                      className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:scale-105 transition-transform"
+                    >
+                      <span className="text-3xl">{cat.icon}</span>
+                      <span className="text-[10px] font-bold">{cat.name}</span>
+                    </button>
+                  ))}
+                </div>
+                <button 
+                  onClick={() => setIsEditing(false)}
+                  className="w-full bg-gray-100 dark:bg-gray-800 py-4 rounded-2xl font-bold"
+                >
+                  取消
+                </button>
+              </div>
+            )}
           </motion.div>
         </div>
       )}

@@ -1,36 +1,71 @@
 /**
- * Coiny 支出分類引擎
- * 採用多層級判斷：商家名稱關鍵字 -> 統編行業代碼 -> 預設分類
+ * Coiny 進階支出分類引擎 v2
+ * 支援品項比對、強大的內建庫
  */
 
-interface MerchantRule {
-  keywords: string[];
-  category: string;
+interface CategoryRule {
+  name: string;
   icon: string;
+  keywords: string[];
 }
 
-// 行業代碼對照表 (基於中華民國行業標準分類)
-const INDUSTRY_CODE_MAP: Record<string, { category: string; icon: string }> = {
-  "4711": { category: "便利商店", icon: "🏪" }, // 飲食品零售 (超商)
-  "4719": { category: "百貨", icon: "🏢" },    // 其他綜合零售 (百貨、量販)
-  "4729": { category: "超市", icon: "🛒" },    // 其他食品零售 (超市)
-  "5611": { category: "餐飲", icon: "🍱" },    // 餐館
-  "5631": { category: "餐飲", icon: "☕" },    // 飲料店
-  "4751": { category: "購物", icon: "👕" },    // 布疋服飾零售
-  "4741": { category: "購物", icon: "💻" },    // 電腦及其週邊零售
-  "4841": { category: "購物", icon: "📦" },    // 無店面零售 (網購)
-  "4731": { category: "交通", icon: "⛽" },    // 燃料零售 (加油站)
-  "4781": { category: "醫療", icon: "🏥" },    // 藥品醫療零售
-};
-
-const MERCHANT_RULES: MerchantRule[] = [
-  { keywords: ["統一超商", "7-ELEVEN", "7-11"], category: "便利商店", icon: "🏪" },
-  { keywords: ["全家"], category: "便利商店", icon: "🏪" },
-  { keywords: ["星巴克", "咖啡"], category: "餐飲", icon: "☕" },
-  { keywords: ["加油站", "中油", "台亞"], category: "交通", icon: "⛽" },
-  { keywords: ["停車", "車庫"], category: "交通", icon: "🅿️" },
-  { keywords: ["醫院", "診所", "藥局"], category: "醫療", icon: "🏥" },
+// 龐大的內建分類庫
+const SYSTEM_CATEGORIES: CategoryRule[] = [
+  {
+    name: "餐飲",
+    icon: "🍱",
+    keywords: ["咖啡", "麵包", "早餐", "飲料", "珍奶", "飯糰", "便當", "麵", "壽司", "火鍋", "燒肉", "速食", "漢堡", "披薩", "蛋餅", "吐司", "三明治", "雞排", "便當", "午餐", "晚餐", "美食", "星巴克", "路易莎", "麥當勞", "摩斯", "肯德基", "必勝客"],
+  },
+  {
+    name: "生活雜貨",
+    icon: "🧻",
+    keywords: ["衛生紙", "洗衣精", "沐浴乳", "洗髮精", "牙膏", "牙刷", "洗碗精", "抹布", "垃圾袋", "紙巾", "肥皂", "尿布", "濕紙巾", "保潔墊", "清潔劑", "日用品", "屈臣氏", "康是美", "寶雅"],
+  },
+  {
+    name: "交通",
+    icon: "🚗",
+    keywords: ["停車費", "GOGORO", "電池", "GOSHARE", "IRENT", "加油", "高鐵", "捷運", "悠遊卡", "一卡通", "租車", "停車", "中油", "台亞", "客運", "計程車", "UBER", "LINE TAXI"],
+  },
+  {
+    name: "超商",
+    icon: "🏪",
+    keywords: ["統一超商", "全家", "萊爾富", "OK超商", "7-ELEVEN", "7-11"],
+  },
+  {
+    name: "超市",
+    icon: "🛒",
+    keywords: ["全聯", "家樂福", "大潤發", "美廉社", "好市多", "COSTCO", "超市"],
+  },
+  {
+    name: "購物",
+    icon: "🛍️",
+    keywords: ["衣服", "鞋子", "襯衫", "裙子", "褲子", "外套", "包包", "手錶", "飾品", "化妝品", "保養品", "蝦皮", "MOMO", "網購", "百貨", "新光三越", "SOGO"],
+  },
+  {
+    name: "娛樂",
+    icon: "🎮",
+    keywords: ["電影", "KTV", "遊戲", "門票", "訂閱", "NETFLIX", "SPOTIFY", "迪士尼", "演唱會", "展覽"],
+  },
+  {
+    name: "醫療",
+    icon: "🏥",
+    keywords: ["診所", "藥局", "掛號", "感冒", "牙醫", "醫院", "健保", "看病", "口罩"],
+  },
 ];
+
+// 行業代碼對照表
+const INDUSTRY_CODE_MAP: Record<string, { category: string; icon: string }> = {
+  "4711": { category: "超商", icon: "🏪" },
+  "4719": { category: "百貨", icon: "🏢" },
+  "4729": { category: "超市", icon: "🛒" },
+  "5611": { category: "餐飲", icon: "🍱" },
+  "5631": { category: "餐飲", icon: "☕" },
+  "4751": { category: "購物", icon: "👕" },
+  "4741": { category: "購物", icon: "💻" },
+  "4841": { category: "購物", icon: "📦" },
+  "4731": { category: "交通", icon: "⛽" },
+  "4781": { category: "醫療", icon: "🏥" },
+};
 
 function normalizeText(text: string): string {
   return text
@@ -40,57 +75,61 @@ function normalizeText(text: string): string {
     .trim();
 }
 
-/**
- * 透過統編查詢行業別 (使用 g0v API)
- */
 async function fetchIndustryByCategory(taxId: string): Promise<{ category: string; icon: string } | null> {
   if (!taxId || taxId.length !== 8) return null;
-
   try {
     const res = await fetch(`https://company.g0v.ronny.tw/api/show/${taxId}`);
     const data = await res.json();
-    
     if (data && data.data) {
       const d = data.data;
       let code = "";
+      if (d["行業代號"]?.[0]) code = d["行業代號"][0].substring(0, 4);
+      else if (d["財政部"]?.["行業"]?.[0]?.[0]) code = d["財政部"]["行業"][0][0].substring(0, 4);
 
-      // 1. 嘗試從「公司」格式抓取 (行業代號 陣列)
-      if (d["行業代號"] && Array.isArray(d["行業代號"]) && d["行業代號"].length > 0) {
-        code = d["行業代號"][0].substring(0, 4);
-      } 
-      // 2. 嘗試從「商號/財政部」格式抓取 (財政部.行業 巢狀陣列)
-      else if (d["財政部"]?.["行業"]?.[0]?.[0]) {
-        code = d["財政部"]["行業"][0][0].substring(0, 4);
-      }
-
-      if (code && INDUSTRY_CODE_MAP[code]) {
-        console.log(`TaxID ${taxId} matched industry: ${code}`);
-        return INDUSTRY_CODE_MAP[code];
-      }
+      if (code && INDUSTRY_CODE_MAP[code]) return INDUSTRY_CODE_MAP[code];
     }
     return null;
   } catch (error) {
-    console.error("Fetch Industry Error:", error);
     return null;
   }
 }
 
-export async function classifyMerchant(storeName: string, taxId?: string): Promise<{ category: string; icon: string }> {
-  const normalizedName = normalizeText(storeName);
+/**
+ * 核心分類邏輯
+ * @param storeName 商店名稱
+ * @param items 品項名稱清單
+ * @param taxId 統編
+ */
+export async function classifyMerchant(
+  storeName: string, 
+  items: string[] = [], 
+  taxId?: string
+): Promise<{ category: string; icon: string }> {
+  
+  const normalizedStore = normalizeText(storeName);
+  const normalizedItems = items.map(i => normalizeText(i));
 
-  // 優先級 1: 商家名稱關鍵字比對 (最快)
-  for (const rule of MERCHANT_RULES) {
-    if (rule.keywords.some(keyword => normalizedName.includes(normalizeText(keyword)))) {
-      return { category: rule.category, icon: rule.icon };
+  // 1. 優先判定品項 (Item-based)
+  for (const rule of SYSTEM_CATEGORIES) {
+    for (const item of normalizedItems) {
+      if (rule.keywords.some(kw => item.includes(normalizeText(kw)))) {
+        return { category: rule.name, icon: rule.icon };
+      }
     }
   }
 
-  // 優先級 2: 如果有名稱沒命中，嘗試透過統編查詢 (最準)
+  // 2. 判定商店名稱
+  for (const rule of SYSTEM_CATEGORIES) {
+    if (rule.keywords.some(kw => normalizedStore.includes(normalizeText(kw)))) {
+      return { category: rule.name, icon: rule.icon };
+    }
+  }
+
+  // 3. 透過統編查詢
   if (taxId) {
     const industryResult = await fetchIndustryByCategory(taxId);
     if (industryResult) return industryResult;
   }
 
-  // 預設分類
   return { category: "其他", icon: "💰" };
 }

@@ -49,9 +49,6 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
       const invNum = row[6]?.toString().trim();
       const totalAmount = parseInt(row[7]?.toString().trim()) || 0;
 
-      // 自動分類 (非同步)
-      const { category, icon } = await classifyMerchant(store, taxId);
-
       currentInvoice = {
         date,
         store,
@@ -59,8 +56,6 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
         invNum,
         items: [],
         totalAmount,
-        category,
-        icon
       };
       invoices.push(currentInvoice);
     } else if (type === "D" && currentInvoice) {
@@ -69,12 +64,17 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
       const price = parseInt(row[2]?.toString().trim()) || 0;
 
       currentInvoice.items.push({ name, price });
-      // 注意：總金額在 M 欄位已經有了，所以這裡不需要累加，除非 M 欄位為 0
     }
   }
 
   // Save to Firestore and Match
   for (const invoice of invoices) {
+    // 延遲分類：現在有了完整品項，可以進行精準分類
+    const itemNames = invoice.items.map(i => i.name);
+    const { category, icon } = await classifyMerchant(invoice.store, itemNames, invoice.taxId);
+    invoice.category = category;
+    invoice.icon = icon;
+
     await saveAndMatchInvoice(invoice, userId);
   }
 

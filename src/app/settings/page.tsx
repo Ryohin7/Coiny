@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { User, Mail, Shield, Bell, ChevronRight, Copy, ExternalLink, RefreshCcw } from "lucide-react";
+import { User, Mail, Shield, Bell, ChevronRight, Copy, ExternalLink, RefreshCcw, Tag } from "lucide-react";
 import { useLiff } from "@/components/providers/LiffProvider";
 
 export default function SettingsPage() {
@@ -114,25 +115,27 @@ export default function SettingsPage() {
         <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground px-2">一般設定</h3>
         <div className="space-y-2">
           {[
+            { icon: Tag, label: "分類管理", color: "text-orange-500", href: "/settings/categories" },
             { icon: Shield, label: "隱私與安全", color: "text-blue-500" },
             { icon: Bell, label: "通知設定", color: "text-purple-500" },
             { icon: User, label: "帳號資訊", color: "text-pink-500" },
           ].map((item, index) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="glass p-4 rounded-3xl flex items-center justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-xl bg-gray-100 dark:bg-gray-800 ${item.color}`}>
-                  <item.icon size={18} />
+            <Link key={item.label} href={item.href || "#"}>
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="glass p-4 rounded-3xl flex items-center justify-between group cursor-pointer mb-2"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-2 rounded-xl bg-gray-100 dark:bg-gray-800 ${item.color}`}>
+                    <item.icon size={18} />
+                  </div>
+                  <span className="text-sm font-medium">{item.label}</span>
                 </div>
-                <span className="text-sm font-medium">{item.label}</span>
-              </div>
-              <ChevronRight size={16} className="text-muted-foreground group-hover:translate-x-1 transition-transform" />
-            </motion.div>
+                <ChevronRight size={16} className="text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              </motion.div>
+            </Link>
           ))}
         </div>
       </section>
