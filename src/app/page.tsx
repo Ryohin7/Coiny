@@ -37,6 +37,53 @@ export default function HomePage() {
     return sum;
   }, 0);
 
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleDelete = async () => {
+    if (!selectedRecord || !confirm("確定要刪除這筆交易嗎？")) return;
+    try {
+      const res = await fetch(`/api/expenses/${selectedRecord.id}?type=${selectedRecord.type}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setRecords(records.filter(r => r.id !== selectedRecord.id));
+        setSelectedRecord(null);
+      }
+    } catch (error) {
+      alert("刪除失敗");
+    }
+  };
+
+  const handleUpdateCategory = async (newCategory: string, newIcon: string) => {
+    if (!selectedRecord) return;
+    try {
+      const res = await fetch(`/api/expenses/${selectedRecord.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: newCategory, icon: newIcon, type: selectedRecord.type }),
+      });
+      if (res.ok) {
+        setRecords(records.map(r => r.id === selectedRecord.id ? { ...r, category: newCategory, icon: newIcon } : r));
+        setSelectedRecord(null);
+        setIsEditing(false);
+      }
+    } catch (error) {
+      alert("更新失敗");
+    }
+  };
+
+  // 內建分類選項供編輯使用
+  const CATEGORY_OPTIONS = [
+    { name: "餐飲", icon: "🍱" },
+    { name: "超商", icon: "🏪" },
+    { name: "生活雜貨", icon: "🧻" },
+    { name: "交通", icon: "🚗" },
+    { name: "購物", icon: "🛍️" },
+    { name: "娛樂", icon: "🎮" },
+    { name: "醫療", icon: "🏥" },
+    { name: "其他", icon: "💰" },
+  ];
+
   return (
     <div className="p-6 space-y-8 pb-24">
       {/* Header */}
@@ -120,56 +167,7 @@ export default function HomePage() {
         </div>
       </div>
 
-  const [isEditing, setIsEditing] = useState(false);
-
-  const handleDelete = async () => {
-    if (!selectedRecord || !confirm("確定要刪除這筆交易嗎？")) return;
-    try {
-      const res = await fetch(`/api/expenses/${selectedRecord.id}?type=${selectedRecord.type}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setRecords(records.filter(r => r.id !== selectedRecord.id));
-        setSelectedRecord(null);
-      }
-    } catch (error) {
-      alert("刪除失敗");
-    }
-  };
-
-  const handleUpdateCategory = async (newCategory: string, newIcon: string) => {
-    if (!selectedRecord) return;
-    try {
-      const res = await fetch(`/api/expenses/${selectedRecord.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: newCategory, icon: newIcon, type: selectedRecord.type }),
-      });
-      if (res.ok) {
-        setRecords(records.map(r => r.id === selectedRecord.id ? { ...r, category: newCategory, icon: newIcon } : r));
-        setSelectedRecord(null);
-        setIsEditing(false);
-      }
-    } catch (error) {
-      alert("更新失敗");
-    }
-  };
-
-  // 內建分類選項供編輯使用
-  const CATEGORY_OPTIONS = [
-    { name: "餐飲", icon: "🍱" },
-    { name: "超商", icon: "🏪" },
-    { name: "生活雜貨", icon: "🧻" },
-    { name: "交通", icon: "🚗" },
-    { name: "購物", icon: "🛍️" },
-    { name: "娛樂", icon: "🎮" },
-    { name: "醫療", icon: "🏥" },
-    { name: "其他", icon: "💰" },
-  ];
-
-  return (
-    <div className="p-6 space-y-8 pb-24">
-      {/* ... (Header and Summary Card code remains the same) */}
+      </div>
 
       {/* Detail Modal */}
       {selectedRecord && (
