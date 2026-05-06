@@ -38,6 +38,35 @@ export default function HomePage() {
   }, 0);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [availableCategories, setAvailableCategories] = useState<{name: string, icon: string}[]>([]);
+
+  useEffect(() => {
+    if (userId) {
+      const fetchAllCategories = async () => {
+        try {
+          const res = await fetch(`/api/categories?userId=${userId}`);
+          const data = await res.json();
+          const defaults = [
+            { name: "餐飲", icon: "🍱" },
+            { name: "超商", icon: "🏪" },
+            { name: "生活雜貨", icon: "🧻" },
+            { name: "交通", icon: "🚗" },
+            { name: "購物", icon: "🛍️" },
+            { name: "娛樂", icon: "🎮" },
+            { name: "醫療", icon: "🏥" },
+          ];
+          // 合併預設與用戶自訂
+          const merged = [...defaults, ...data.categories.map((c: any) => ({ name: c.name, icon: c.icon }))];
+          // 去重
+          const unique = merged.filter((v, i, a) => a.findIndex(t => t.name === v.name) === i);
+          setAvailableCategories([...unique, { name: "其他", icon: "💰" }]);
+        } catch (error) {
+          console.error("Failed to fetch categories");
+        }
+      };
+      fetchAllCategories();
+    }
+  }, [userId]);
 
   const handleDelete = async () => {
     if (!selectedRecord || !confirm("確定要刪除這筆交易嗎？")) return;
@@ -71,18 +100,6 @@ export default function HomePage() {
       alert("更新失敗");
     }
   };
-
-  // 內建分類選項供編輯使用
-  const CATEGORY_OPTIONS = [
-    { name: "餐飲", icon: "🍱" },
-    { name: "超商", icon: "🏪" },
-    { name: "生活雜貨", icon: "🧻" },
-    { name: "交通", icon: "🚗" },
-    { name: "購物", icon: "🛍️" },
-    { name: "娛樂", icon: "🎮" },
-    { name: "醫療", icon: "🏥" },
-    { name: "其他", icon: "💰" },
-  ];
 
   return (
     <div className="p-6 space-y-8 pb-24">
@@ -251,24 +268,27 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-6">
-                <h3 className="text-xl font-bold">修改分類</h3>
-                <div className="grid grid-cols-4 gap-4">
-                  {CATEGORY_OPTIONS.map((cat) => (
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-bold">修改分類</h3>
+                  <button onClick={() => setIsEditing(false)} className="text-muted-foreground"><Plus size={20} className="rotate-45" /></button>
+                </div>
+                <div className="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-2">
+                  {availableCategories.map((cat) => (
                     <button
                       key={cat.name}
                       onClick={() => handleUpdateCategory(cat.name, cat.icon)}
-                      className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:scale-105 transition-transform"
+                      className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all border border-transparent hover:border-blue-200"
                     >
-                      <span className="text-3xl">{cat.icon}</span>
-                      <span className="text-[10px] font-bold">{cat.name}</span>
+                      <span className="text-xl">{cat.icon}</span>
+                      <span className="font-bold text-sm">{cat.name}</span>
                     </button>
                   ))}
                 </div>
                 <button 
                   onClick={() => setIsEditing(false)}
-                  className="w-full bg-gray-100 dark:bg-gray-800 py-4 rounded-2xl font-bold"
+                  className="w-full py-4 text-muted-foreground font-bold text-sm"
                 >
-                  取消
+                  取消修改
                 </button>
               </div>
             )}
