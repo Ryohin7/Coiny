@@ -10,6 +10,8 @@ export default function HomePage() {
   const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
+
   useEffect(() => {
     const fetchRecords = async () => {
       if (!userId) return;
@@ -36,14 +38,14 @@ export default function HomePage() {
   }, 0);
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 space-y-8 pb-24">
       {/* Header */}
       <header className="flex justify-between items-end pt-4">
         <div>
           <p className="text-muted-foreground text-sm font-medium">👋 你好，{profile?.displayName || "用戶"}</p>
           <h1 className="text-3xl font-bold tracking-tight text-gradient">記帳明細</h1>
         </div>
-        <div className="bg-black dark:bg-white text-white dark:text-black p-3 rounded-2xl shadow-lg">
+        <div className="bg-black dark:bg-white text-white dark:text-black p-3 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-transform">
           <Plus size={24} />
         </div>
       </header>
@@ -95,7 +97,8 @@ export default function HomePage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="glass p-4 rounded-3xl flex items-center gap-4 hover:scale-[1.02] transition-transform cursor-pointer"
+                  onClick={() => setSelectedRecord(record)}
+                  className="glass p-4 rounded-3xl flex items-center gap-4 hover:scale-[1.02] active:scale-95 transition-transform cursor-pointer"
                 >
                   <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-2xl">
                     {isInvoice ? <ShoppingBag size={20} /> : <Utensils size={20} />}
@@ -116,6 +119,66 @@ export default function HomePage() {
           )}
         </div>
       </div>
+
+      {/* Detail Modal */}
+      {selectedRecord && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedRecord(null)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          <motion.div 
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[2.5rem] p-8 relative z-10 shadow-2xl overflow-hidden"
+          >
+            <div className="space-y-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-2xl font-bold">{selectedRecord.store || (selectedRecord.matched ? "對帳交易" : "手動記帳")}</h3>
+                  <p className="text-muted-foreground text-sm">{selectedRecord.date}</p>
+                </div>
+                <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-full cursor-pointer" onClick={() => setSelectedRecord(null)}>
+                  <Plus size={20} className="rotate-45" />
+                </div>
+              </div>
+
+              <div className="border-t border-b border-gray-100 dark:border-gray-800 py-6 max-h-[40vh] overflow-y-auto space-y-4">
+                {selectedRecord.items && selectedRecord.items.length > 0 ? (
+                  selectedRecord.items.map((item: any, i: number) => (
+                    <div key={i} className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground flex-1 pr-4">{item.name}</span>
+                      <span className={`font-medium ${item.price < 0 ? "text-red-500" : ""}`}>
+                        {item.price < 0 ? "" : "$"}{item.price.toLocaleString()}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-muted-foreground text-sm py-4">尚無明細資料</p>
+                )}
+              </div>
+
+              <div className="flex justify-between items-center pt-2">
+                <span className="font-bold text-lg">總計金額</span>
+                <span className="text-2xl font-black">
+                  ${(selectedRecord.totalAmount || selectedRecord.amount).toLocaleString()}
+                </span>
+              </div>
+              
+              <button 
+                onClick={() => setSelectedRecord(null)}
+                className="w-full bg-black dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all"
+              >
+                關閉
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
