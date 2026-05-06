@@ -71,7 +71,7 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
   for (const invoice of invoices) {
     // 延遲分類：現在有了完整品項，可以進行精準分類
     const itemNames = invoice.items.map(i => i.name);
-    const { category, icon } = await classifyMerchant(invoice.store, itemNames, invoice.taxId);
+    const { category, icon } = await classifyMerchant(invoice.store, itemNames, invoice.taxId, userId);
     invoice.category = category;
     invoice.icon = icon;
 

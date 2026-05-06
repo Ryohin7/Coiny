@@ -111,18 +111,31 @@ export async function classifyMerchant(
   const normalizedStore = normalizeText(storeName);
   const normalizedItems = items.map(i => normalizeText(i));
 
-  // 0. 優先權最高：檢查是否符合用戶自訂的分類名稱 (針對 LINE 手動輸入)
+  // 0. 用戶自訂規則 - 絕對優先
   if (userId) {
     try {
       const db = getDb();
       if (db) {
         const snapshot = await db.collection("categories").where("userId", "==", userId).get();
-        const userCategories = snapshot.docs.map(doc => doc.data() as { name: string, icon: string });
+        const userCategories = snapshot.docs.map(doc => doc.data() as { name: string, icon: string, keywords: string[] });
         
+        // A. 優先檢查是否直接符合「分類名稱」
         for (const cat of userCategories) {
           const normCatName = normalizeText(cat.name);
           if (normalizedStore.includes(normCatName) || normalizedItems.some(item => item.includes(normCatName))) {
             return { category: cat.name, icon: cat.icon };
+          }
+        }
+
+        // B. 檢查是否符合「用戶自訂關鍵字」
+        for (const cat of userCategories) {
+          if (cat.keywords && cat.keywords.length > 0) {
+            for (const kw of cat.keywords) {
+              const normKw = normalizeText(kw);
+              if (normalizedStore.includes(normKw) || normalizedItems.some(item => item.includes(normKw))) {
+                return { category: cat.name, icon: cat.icon };
+              }
+            }
           }
         }
       }
@@ -131,7 +144,7 @@ export async function classifyMerchant(
     }
   }
 
-  // 1. 優先判定品項 (Item-based)
+  // 1. 系統預設規則 (Item-based)
   for (const rule of SYSTEM_CATEGORIES) {
     for (const item of normalizedItems) {
       if (rule.keywords.some(kw => item.includes(normalizeText(kw)))) {
@@ -140,7 +153,7 @@ export async function classifyMerchant(
     }
   }
 
-  // 2. 判定商店名稱
+  // 2. 系統預設規則 (Store-based)
   for (const rule of SYSTEM_CATEGORIES) {
     if (rule.keywords.some(kw => normalizedStore.includes(normalizeText(kw)))) {
       return { category: rule.name, icon: rule.icon };
