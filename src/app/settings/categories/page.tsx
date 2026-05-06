@@ -42,11 +42,18 @@ export default function CategoryManagementPage() {
       const res = await fetch(`/api/categories?userId=${userId}`);
       const data = await res.json();
       
-      if (data.categories.length === 0) {
-        // 如果完全沒有分類，自動幫用戶建立初始分類
-        seedDefaultCategories();
+      const userCats = data.categories as Category[];
+      
+      // 檢查是否缺少基礎類別 (依名稱比對)
+      const missingDefaults = DEFAULT_CATEGORIES.filter(
+        def => !userCats.some(userCat => userCat.name === def.name)
+      );
+
+      if (missingDefaults.length > 0 && userCats.length === 0) {
+        // 如果完全沒資料，執行全面種子化
+        await seedDefaultCategories();
       } else {
-        setCategories(data.categories);
+        setCategories(userCats);
       }
     } catch (error) {
       console.error("Fetch Categories Error:", error);
@@ -55,19 +62,26 @@ export default function CategoryManagementPage() {
     }
   };
 
-  const seedDefaultCategories = async () => {
+  const seedDefaultCategories = async (onlyMissing = false) => {
     try {
+      const currentRes = await fetch(`/api/categories?userId=${userId}`);
+      const currentData = await currentRes.json();
+      const currentNames = currentData.categories.map((c: any) => c.name);
+
       for (const cat of DEFAULT_CATEGORIES) {
+        if (onlyMissing && currentNames.includes(cat.name)) continue;
+        
         await fetch("/api/categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId, ...cat }),
         });
       }
-      // 重新抓取
-      const res = await fetch(`/api/categories?userId=${userId}`);
-      const data = await res.json();
-      setCategories(data.categories);
+      
+      // 重新整理頁面資料
+      const finalRes = await fetch(`/api/categories?userId=${userId}`);
+      const finalData = await finalRes.json();
+      setCategories(finalData.categories);
     } catch (error) {
       console.error("Seeding failed");
     }
@@ -195,6 +209,13 @@ export default function CategoryManagementPage() {
             className="w-full py-6 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-[2.5rem] text-muted-foreground font-bold flex items-center justify-center gap-2 hover:border-blue-500 hover:text-blue-500 transition-all"
           >
             <Plus size={20} /> 新增分類
+          </button>
+
+          <button 
+            onClick={() => seedDefaultCategories(true)}
+            className="w-full py-4 text-xs text-muted-foreground font-bold flex items-center justify-center gap-2 hover:text-blue-500 transition-colors"
+          >
+            <Loader2 size={14} className="animate-spin-slow" /> 補齊/還原基礎分類
           </button>
         </div>
       )}
