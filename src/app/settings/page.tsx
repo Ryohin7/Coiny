@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { User, Mail, Shield, Bell, ChevronRight, Copy, ExternalLink } from "lucide-react";
+import { User, Mail, Shield, Bell, ChevronRight, Copy, ExternalLink, RefreshCcw } from "lucide-react";
 import { useLiff } from "@/components/providers/LiffProvider";
 
 export default function SettingsPage() {
-  const { profile, emailID } = useLiff();
+  const { profile, userId, emailID } = useLiff();
   const forwardEmail = emailID ? `${emailID}@coinyapp.com` : "載入中...";
 
   const copyToClipboard = () => {
@@ -13,28 +14,52 @@ export default function SettingsPage() {
     alert("已複製轉寄地址！");
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefreshCategories = async () => {
+    if (!userId) return;
+    setRefreshing(true);
+    try {
+      const res = await fetch("/api/expenses/refresh-category", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      alert(data.message || "分類更新完成！");
+      window.location.reload(); // 重新整理頁面以顯示新分類
+    } catch (error) {
+      alert("更新失敗，請稍後再試");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 space-y-8 pb-24">
       <header className="pt-4">
         <h1 className="text-3xl font-bold tracking-tight text-gradient">設定</h1>
+        <p className="text-muted-foreground text-sm">管理您的對帳帳號與偏好</p>
       </header>
 
       {/* User Profile */}
-      <div className="flex items-center gap-4 px-2">
-        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white dark:border-gray-800 shadow-xl">
-          {profile?.pictureUrl ? (
-            <img src={profile.pictureUrl} alt={profile.displayName} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-tr from-gray-200 to-gray-400 dark:from-gray-700 dark:to-gray-900 flex items-center justify-center">
-              <User size={32} className="text-white" />
-            </div>
-          )}
+      <section className="glass p-6 rounded-[2.5rem] space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white dark:border-gray-800 shadow-xl">
+            {profile?.pictureUrl ? (
+              <img src={profile.pictureUrl} alt={profile.displayName} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-tr from-gray-200 to-gray-400 dark:from-gray-700 dark:to-gray-900 flex items-center justify-center">
+                <User size={32} className="text-white" />
+              </div>
+            )}
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">{profile?.displayName || "載入中..."}</h2>
+            <p className="text-xs text-muted-foreground font-mono">{userId}</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold">{profile?.displayName || "載入中..."}</h2>
-          <p className="text-xs text-muted-foreground">Premium 帳戶</p>
-        </div>
-      </div>
+      </section>
 
       {/* Forwarding Section */}
       <section className="space-y-4">
@@ -61,6 +86,27 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Data Management */}
+      <section className="space-y-4">
+        <h3 className="text-sm font-semibold px-1 text-muted-foreground uppercase tracking-wider">數據與分類</h3>
+        <button 
+          onClick={handleRefreshCategories}
+          disabled={refreshing}
+          className="w-full glass p-6 rounded-[2.5rem] flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-2xl text-blue-600">
+              <RefreshCcw size={24} className={refreshing ? "animate-spin" : ""} />
+            </div>
+            <div className="text-left">
+              <p className="font-bold">重新整理所有交易分類</p>
+              <p className="text-xs text-muted-foreground">透過統編與關鍵字更新現有紀錄</p>
+            </div>
+          </div>
+          <ChevronRight size={20} className="text-muted-foreground" />
+        </button>
       </section>
 
       {/* Menu Items */}
