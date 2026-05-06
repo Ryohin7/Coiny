@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       if (match) {
         const amount = parseInt(match[2]);
         const note = match[3]?.trim() || "手動記帳";
-        const { category, icon } = await classifyMerchant(note);
+        const { category, icon } = await classifyMerchant(note, [], undefined, userId);
         
         const date = new Date();
         const dateStr = date.toISOString().split("T")[0].replace(/-/g, "/"); // YYYY/MM/DD

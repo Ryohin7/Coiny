@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Plus, ChevronLeft, Trash2, Tag, 
-  Settings2, Check, X, Loader2, Edit2
+  Settings2, Check, X, Loader2, Edit2, Smile
 } from "lucide-react";
 import { useLiff } from "@/components/providers/LiffProvider";
 import Link from "next/link";
@@ -42,13 +42,34 @@ export default function CategoryManagementPage() {
       const res = await fetch(`/api/categories?userId=${userId}`);
       const data = await res.json();
       
-      // 合併預設分類與用戶自訂分類
-      const defaults = DEFAULT_CATEGORIES.map((c, i) => ({ id: `default-${i}`, ...c }));
-      setCategories([...defaults, ...data.categories]);
+      if (data.categories.length === 0) {
+        // 如果完全沒有分類，自動幫用戶建立初始分類
+        seedDefaultCategories();
+      } else {
+        setCategories(data.categories);
+      }
     } catch (error) {
       console.error("Fetch Categories Error:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const seedDefaultCategories = async () => {
+    try {
+      for (const cat of DEFAULT_CATEGORIES) {
+        await fetch("/api/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, ...cat }),
+        });
+      }
+      // 重新抓取
+      const res = await fetch(`/api/categories?userId=${userId}`);
+      const data = await res.json();
+      setCategories(data.categories);
+    } catch (error) {
+      console.error("Seeding failed");
     }
   };
 
@@ -76,10 +97,6 @@ export default function CategoryManagementPage() {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (id.startsWith("default")) {
-      alert("預設分類無法刪除，請建立新的自訂分類");
-      return;
-    }
     if (!confirm("確定要刪除此分類嗎？")) return;
     try {
       const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
@@ -118,14 +135,14 @@ export default function CategoryManagementPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-black tracking-tight">分類管理</h1>
-          <p className="text-muted-foreground text-xs font-medium">自訂您的自動判定關鍵字</p>
+          <p className="text-muted-foreground text-xs font-medium">自訂您的分類名稱與圖示</p>
         </div>
       </header>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="animate-spin text-blue-500" size={32} />
-          <p className="text-sm text-muted-foreground">載入分類中...</p>
+          <p className="text-sm text-muted-foreground">載入個人化設定中...</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -142,27 +159,20 @@ export default function CategoryManagementPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-3xl">{cat.icon}</span>
                     <h3 className="font-black text-xl">{cat.name}</h3>
-                    {cat.id.startsWith("default") && (
-                      <span className="text-[10px] bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-muted-foreground">內建</span>
-                    )}
                   </div>
                   <div className="flex gap-2">
-                    {!cat.id.startsWith("default") && (
-                      <>
-                        <button 
-                          onClick={() => setEditingCat(cat)}
-                          className="text-muted-foreground p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl"
-                        >
-                          <Edit2 size={18} />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteCategory(cat.id)}
-                          className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </>
-                    )}
+                    <button 
+                      onClick={() => setEditingCat(cat)}
+                      className="text-muted-foreground p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteCategory(cat.id)}
+                      className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                   </div>
                 </div>
 
@@ -172,6 +182,9 @@ export default function CategoryManagementPage() {
                       #{kw}
                     </span>
                   ))}
+                  {cat.keywords.length === 0 && (
+                    <span className="text-[10px] text-muted-foreground italic">無關鍵字，點擊編輯新增</span>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -181,7 +194,7 @@ export default function CategoryManagementPage() {
             onClick={() => setIsAdding(true)}
             className="w-full py-6 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-[2.5rem] text-muted-foreground font-bold flex items-center justify-center gap-2 hover:border-blue-500 hover:text-blue-500 transition-all"
           >
-            <Plus size={20} /> 新增自訂分類
+            <Plus size={20} /> 新增分類
           </button>
         </div>
       )}
@@ -203,21 +216,38 @@ export default function CategoryManagementPage() {
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-[2.5rem] p-8 relative z-10 shadow-2xl space-y-6"
             >
-              <h3 className="text-xl font-black">{editingCat ? "編輯分類" : "新增自訂分類"}</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-black">{editingCat ? "編輯分類" : "新增分類"}</h3>
+                <div className="text-3xl bg-gray-50 dark:bg-gray-800 w-16 h-16 flex items-center justify-center rounded-2xl">
+                  {editingCat ? editingCat.icon : newCat.icon}
+                </div>
+              </div>
               
               <div className="space-y-4">
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">分類名稱</label>
-                  <input 
-                    type="text" 
-                    value={editingCat ? editingCat.name : newCat.name}
-                    onChange={(e) => editingCat ? setEditingCat({...editingCat, name: e.target.value}) : setNewCat({ ...newCat, name: e.target.value })}
-                    className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 outline-none focus:ring-2 ring-blue-500 transition-all"
-                    placeholder="例如：寵物用品"
-                  />
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="col-span-1">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">圖示</label>
+                    <input 
+                      type="text" 
+                      maxLength={2}
+                      value={editingCat ? editingCat.icon : newCat.icon}
+                      onChange={(e) => editingCat ? setEditingCat({...editingCat, icon: e.target.value}) : setNewCat({ ...newCat, icon: e.target.value })}
+                      className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 text-center outline-none focus:ring-2 ring-blue-500"
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">分類名稱</label>
+                    <input 
+                      type="text" 
+                      value={editingCat ? editingCat.name : newCat.name}
+                      onChange={(e) => editingCat ? setEditingCat({...editingCat, name: e.target.value}) : setNewCat({ ...newCat, name: e.target.value })}
+                      className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 outline-none focus:ring-2 ring-blue-500 transition-all"
+                      placeholder="例如：主子開銷"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">判定關鍵字 (用逗號隔開)</label>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">自動判定關鍵字 (用逗號隔開)</label>
                   <textarea 
                     value={editingCat ? editingCat.keywords.join(", ") : newCat.keywords}
                     onChange={(e) => {
@@ -242,7 +272,7 @@ export default function CategoryManagementPage() {
                   onClick={editingCat ? handleUpdateCategory : handleAddCategory}
                   className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold"
                 >
-                  {editingCat ? "儲存修改" : "確認新增"}
+                  確認
                 </button>
               </div>
             </motion.div>

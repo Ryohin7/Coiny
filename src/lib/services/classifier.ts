@@ -2,6 +2,7 @@
  * Coiny 進階支出分類引擎 v2
  * 支援品項比對、強大的內建庫
  */
+import { getDb } from "../firebase/admin";
 
 interface CategoryRule {
   name: string;
@@ -103,11 +104,32 @@ async function fetchIndustryByCategory(taxId: string): Promise<{ category: strin
 export async function classifyMerchant(
   storeName: string, 
   items: string[] = [], 
-  taxId?: string
+  taxId?: string,
+  userId?: string
 ): Promise<{ category: string; icon: string }> {
   
   const normalizedStore = normalizeText(storeName);
   const normalizedItems = items.map(i => normalizeText(i));
+
+  // 0. 優先權最高：檢查是否符合用戶自訂的分類名稱 (針對 LINE 手動輸入)
+  if (userId) {
+    try {
+      const db = getDb();
+      if (db) {
+        const snapshot = await db.collection("categories").where("userId", "==", userId).get();
+        const userCategories = snapshot.docs.map(doc => doc.data() as { name: string, icon: string });
+        
+        for (const cat of userCategories) {
+          const normCatName = normalizeText(cat.name);
+          if (normalizedStore.includes(normCatName) || normalizedItems.some(item => item.includes(normCatName))) {
+            return { category: cat.name, icon: cat.icon };
+          }
+        }
+      }
+    } catch (e) {
+      console.error("User category matching failed:", e);
+    }
+  }
 
   // 1. 優先判定品項 (Item-based)
   for (const rule of SYSTEM_CATEGORIES) {
