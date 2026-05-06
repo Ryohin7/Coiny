@@ -38,16 +38,26 @@ export default function TestApiPage() {
       const data = await res.json();
       
       if (data && data.data) {
-        const fullIndustry = data.data["行業代號"]?.[0] || "無行業代號資料";
-        const code = fullIndustry.substring(0, 4);
+        const d = data.data;
+        let code = "";
+        let fullIndustry = "無行業資料";
+
+        if (d["行業代號"] && d["行業代號"][0]) {
+          fullIndustry = d["行業代號"][0];
+          code = fullIndustry.substring(0, 4);
+        } else if (d["財政部"]?.["行業"]?.[0]?.[0]) {
+          fullIndustry = d["財政部"]["行業"][0].join(" ");
+          code = d["財政部"]["行業"][0][0].substring(0, 4);
+        }
+
         const classification = INDUSTRY_CODE_MAP[code] || { category: "其他", icon: "💰" };
 
         setResult({
-          name: data.data["公司名稱"] || data.data["商業名稱"] || "未知名稱",
+          name: d["公司名稱"] || d["商業名稱"] || "未知名稱",
           fullIndustry,
           code,
           classification,
-          raw: data.data
+          raw: d
         });
       } else {
         setError("找不到此統編的資料");

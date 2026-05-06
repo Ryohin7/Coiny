@@ -51,11 +51,21 @@ async function fetchIndustryByCategory(taxId: string): Promise<{ category: strin
     const data = await res.json();
     
     if (data && data.data) {
-      // 取得主營業務的行業代碼 (通常是前四碼)
-      const industryCode = data.data["行業代號"]?.[0]?.substring(0, 4);
-      if (industryCode && INDUSTRY_CODE_MAP[industryCode]) {
-        console.log(`TaxID ${taxId} matched industry: ${industryCode}`);
-        return INDUSTRY_CODE_MAP[industryCode];
+      const d = data.data;
+      let code = "";
+
+      // 1. 嘗試從「公司」格式抓取 (行業代號 陣列)
+      if (d["行業代號"] && Array.isArray(d["行業代號"]) && d["行業代號"].length > 0) {
+        code = d["行業代號"][0].substring(0, 4);
+      } 
+      // 2. 嘗試從「商號/財政部」格式抓取 (財政部.行業 巢狀陣列)
+      else if (d["財政部"]?.["行業"]?.[0]?.[0]) {
+        code = d["財政部"]["行業"][0][0].substring(0, 4);
+      }
+
+      if (code && INDUSTRY_CODE_MAP[code]) {
+        console.log(`TaxID ${taxId} matched industry: ${code}`);
+        return INDUSTRY_CODE_MAP[code];
       }
     }
     return null;
