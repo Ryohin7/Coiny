@@ -10,9 +10,12 @@ interface InvoiceItem {
 interface Invoice {
   date: string; // YYYY/MM/DD
   store: string;
+  taxId?: string;
   invNum: string;
   items: InvoiceItem[];
   totalAmount: number;
+  category?: string;
+  icon?: string;
 }
 
 export async function parseMOFCSV(csvContent: string, userId: string) {
@@ -41,16 +44,23 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
       if (rawDate.length < 8) continue;
       
       const date = `${rawDate.substring(0, 4)}/${rawDate.substring(4, 6)}/${rawDate.substring(6, 8)}`;
+      const taxId = row[4]?.toString().trim();
       const store = row[5]?.toString().trim() || "未知商店";
       const invNum = row[6]?.toString().trim();
       const totalAmount = parseInt(row[7]?.toString().trim()) || 0;
 
+      // 自動分類 (非同步)
+      const { category, icon } = await classifyMerchant(store, taxId);
+
       currentInvoice = {
         date,
         store,
+        taxId,
         invNum,
         items: [],
         totalAmount,
+        category,
+        icon
       };
       invoices.push(currentInvoice);
     } else if (type === "D" && currentInvoice) {
@@ -79,9 +89,6 @@ async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
   
   const batch = db.batch();
   
-  // 自動分類
-  const { category, icon } = classifyMerchant(invoice.store);
-
   // Search for potential manual entries
   const manualQuery = await db
     .collection("manual_expenses")
@@ -103,8 +110,6 @@ async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
   batch.set(invoiceRef, {
     ...invoice,
     userId,
-    category,
-    icon,
     matchedManualId,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
