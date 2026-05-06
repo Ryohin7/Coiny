@@ -100,12 +100,12 @@ export default function HomePage() {
                   onClick={() => setSelectedRecord(record)}
                   className="glass p-4 rounded-3xl flex items-center gap-4 hover:scale-[1.02] active:scale-95 transition-transform cursor-pointer"
                 >
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-2xl">
-                    {isInvoice ? <ShoppingBag size={20} /> : <Utensils size={20} />}
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-2xl text-xl">
+                    {record.icon || (isInvoice ? "🧾" : "📝")}
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <h4 className="font-semibold text-sm truncate">{storeName}</h4>
-                    <p className="text-[10px] text-muted-foreground">{record.date}</p>
+                    <p className="text-[10px] text-muted-foreground">{record.date} • {record.category || "未分類"}</p>
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-sm">-${amount.toLocaleString()}</p>

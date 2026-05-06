@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import * as admin from "firebase-admin";
 import { getDb } from "@/lib/firebase/admin";
 import crypto from "crypto";
+import { classifyMerchant } from "@/lib/services/classifier";
 
 export const dynamic = "force-dynamic";
 
@@ -38,11 +39,14 @@ export async function POST(req: Request) {
 
       if (!userId) continue;
 
-      // Regex to match "載具 69元" or "記帳 69"
-      const match = text.match(/^(載具|記帳)\s*(\d+)/i);
+      // Regex to match "載具 69 午餐" or "記帳 69元 飲料"
+      const match = text.match(/^(載具|記帳)\s*(\d+)\s*(.*)/i);
 
       if (match) {
         const amount = parseInt(match[2]);
+        const note = match[3]?.trim() || "手動記帳";
+        const { category, icon } = classifyMerchant(note);
+        
         const date = new Date();
         const dateStr = date.toISOString().split("T")[0].replace(/-/g, "/"); // YYYY/MM/DD
 
@@ -57,6 +61,9 @@ export async function POST(req: Request) {
             userId,
             amount,
             date: dateStr,
+            note,
+            category,
+            icon,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             matched: false,
             originalText: text,

@@ -71,11 +71,16 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
   return invoices;
 }
 
+import { classifyMerchant } from "./classifier";
+
 async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
   const db = getDb();
   if (!db) return;
   
   const batch = db.batch();
+  
+  // 自動分類
+  const { category, icon } = classifyMerchant(invoice.store);
 
   // Search for potential manual entries
   const manualQuery = await db
@@ -98,6 +103,8 @@ async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
   batch.set(invoiceRef, {
     ...invoice,
     userId,
+    category,
+    icon,
     matchedManualId,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
