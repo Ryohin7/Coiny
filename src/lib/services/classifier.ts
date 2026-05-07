@@ -117,12 +117,12 @@ async function fetchIndustryByCategory(taxId: string): Promise<{ category: strin
  * @param taxId 統編
  */
 export async function classifyMerchant(
-  storeName: string, 
-  items: string[] = [], 
+  storeName: string,
+  items: string[] = [],
   taxId?: string,
   userId?: string
 ): Promise<{ category: string; icon: string }> {
-  
+
   const normalizedStore = normalizeText(storeName);
   const normalizedItems = items.map(i => normalizeText(i));
 
@@ -133,7 +133,7 @@ export async function classifyMerchant(
       if (db) {
         const snapshot = await db.collection("categories").where("userId", "==", userId).get();
         const userCategories = snapshot.docs.map(doc => doc.data() as { name: string, icon: string, keywords: string[] });
-        
+
         // A. 優先檢查是否直接符合「分類名稱」
         for (const cat of userCategories) {
           const normCatName = normalizeText(cat.name);

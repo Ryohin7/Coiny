@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus, CreditCard, ShoppingBag, Utensils, ReceiptText, Loader2, Trash2, Edit3 } from "lucide-react";
+import { Plus, CreditCard, ShoppingBag, Utensils, ReceiptText, Loader2, Trash2, Edit3, Check, ChevronLeft } from "lucide-react";
 import { useLiff } from "@/components/providers/LiffProvider";
 import { useEffect, useState } from "react";
 import { clsx, type ClassValue } from "clsx";
@@ -17,37 +17,82 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [availableCategories, setAvailableCategories] = useState<{name: string, icon: string}[]>([]);
+
+  const [pendingInvoices, setPendingInvoices] = useState<any[]>([]);
+  const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
+  const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
+
+  const fetchRecords = async () => {
+    if (!userId) return;
+    try {
+      const res = await fetch(`/api/expenses?userId=${userId}`);
+      const data = await res.json();
+      setRecords(data.records || []);
+    } catch (error) {
+      console.error("Failed to fetch records:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPending = async () => {
+    if (!userId) return;
+    try {
+      const res = await fetch(`/api/invoices/pending?userId=${userId}`);
+      const data = await res.json();
+      const pending = data.pendingInvoices || [];
+      setPendingInvoices(pending);
+      setSelectedPendingIds(pending.map((p: any) => p.id));
+    } catch (error) {
+      console.error("Failed to fetch pending invoices");
+    }
+  };
 
   useEffect(() => {
-    const fetchRecords = async () => {
-      if (!userId) return;
-      try {
-        const res = await fetch(`/api/expenses?userId=${userId}`);
-        const data = await res.json();
-        setRecords(data.records || []);
-      } catch (error) {
-        console.error("Failed to fetch records:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRecords();
+    if (userId) {
+      fetchRecords();
+      fetchPending();
+    }
   }, [userId]);
 
+  const handleConfirmImport = async () => {
+    if (selectedPendingIds.length === 0) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/invoices/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, invoiceIds: selectedPendingIds }),
+      });
+      if (res.ok) {
+        const others = pendingInvoices.filter(p => !selectedPendingIds.includes(p.id));
+        if (others.length > 0) {
+            await fetch("/api/invoices/confirm", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, invoiceIds: others.map(p => p.id) }),
+            });
+        }
+        setIsPendingModalOpen(false);
+        fetchRecords();
+        fetchPending();
+      }
+    } catch (error) {
+      alert("匯入失敗");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const totalAmount = records.reduce((sum, rec) => {
-    // 僅加總未對帳的手動支出或所有發票支出 (避免重複計算)
-    // 排除收入
     if (rec.isIncome) return sum;
-    
     if (rec.type === "invoice" || (rec.type === "manual" && !rec.matched)) {
       return sum + (rec.amount || rec.totalAmount || 0);
     }
     return sum;
   }, 0);
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [availableCategories, setAvailableCategories] = useState<{name: string, icon: string}[]>([]);
 
   useEffect(() => {
     if (userId) {
@@ -63,10 +108,11 @@ export default function HomePage() {
             { name: "購物", icon: "🛍️" },
             { name: "娛樂", icon: "🎮" },
             { name: "醫療", icon: "🏥" },
+            { name: "訂閱", icon: "📺" },
+            { name: "房租", icon: "🏠" },
+            { name: "旅行", icon: "✈️" },
           ];
-          // 合併預設與用戶自訂
           const merged = [...defaults, ...data.categories.map((c: any) => ({ name: c.name, icon: c.icon }))];
-          // 去重
           const unique = merged.filter((v, i, a) => a.findIndex(t => t.name === v.name) === i);
           setAvailableCategories([...unique, { name: "其他", icon: "💰" }]);
         } catch (error) {
@@ -112,7 +158,6 @@ export default function HomePage() {
 
   return (
     <div className="p-6 space-y-8 pb-24">
-      {/* Header */}
       <header className="flex justify-between items-end pt-4">
         <div>
           <p className="text-muted-foreground text-sm font-medium">👋 你好，{profile?.displayName || "用戶"}</p>
@@ -124,24 +169,49 @@ export default function HomePage() {
       </header>
 
       {/* Summary Card */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-black dark:bg-white text-white dark:text-black p-6 rounded-[2.5rem] space-y-4 shadow-2xl relative overflow-hidden group"
-      >
-        <div className="relative z-10">
-          <p className="opacity-70 text-sm font-medium">本月總支出</p>
-          <h2 className="text-4xl font-bold mt-1">${totalAmount.toLocaleString()}</h2>
-          <div className="flex gap-4 mt-6">
-            <div className="bg-white/10 dark:bg-black/10 px-4 py-2 rounded-full text-xs font-semibold backdrop-blur-md">
-              {records.length} 筆記錄
+      <div className="space-y-4">
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-black dark:bg-white text-white dark:text-black p-6 rounded-[2.5rem] space-y-4 shadow-2xl relative overflow-hidden group"
+        >
+            <div className="relative z-10">
+            <p className="opacity-70 text-sm font-medium">本月總支出</p>
+            <h2 className="text-4xl font-bold mt-1">${totalAmount.toLocaleString()}</h2>
+            <div className="flex gap-4 mt-6">
+                <div className="bg-white/10 dark:bg-black/10 px-4 py-2 rounded-full text-xs font-semibold backdrop-blur-md">
+                {records.length} 筆記錄
+                </div>
             </div>
-          </div>
-        </div>
-        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-          <CreditCard size={120} strokeWidth={1} />
-        </div>
-      </motion.div>
+            </div>
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <CreditCard size={120} strokeWidth={1} />
+            </div>
+        </motion.div>
+
+        {/* Pending Invoices Notification */}
+        {pendingInvoices.length > 0 && (
+            <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setIsPendingModalOpen(true)}
+                className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-4 rounded-3xl flex items-center justify-between group transition-all"
+            >
+                <div className="flex items-center gap-3">
+                    <div className="bg-blue-500 p-2 rounded-xl text-white">
+                        <CreditCard size={18} />
+                    </div>
+                    <div className="text-left">
+                        <p className="text-blue-600 dark:text-blue-400 font-bold text-sm">有新的載具資料匯入</p>
+                        <p className="text-blue-500/60 dark:text-blue-400/60 text-[10px]">點擊查看並確認匯入 ({pendingInvoices.length} 筆)</p>
+                    </div>
+                </div>
+                <Plus size={20} className="rotate-180 text-blue-500" />
+            </motion.button>
+        )}
+      </div>
 
       {/* Expense List */}
       <div className="space-y-6">
@@ -333,6 +403,108 @@ export default function HomePage() {
           </motion.div>
         </div>
       )}
+      {/* Pending Import Modal */}
+      <AnimatePresence>
+        {isPendingModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsPendingModalOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "100%", opacity: 0 }}
+              className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[2.5rem] p-8 relative z-10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h3 className="text-xl font-bold">載具資料匯入</h3>
+                    <p className="text-xs text-muted-foreground">勾選您要匯入的資料</p>
+                </div>
+                <button onClick={() => setIsPendingModalOpen(false)} className="text-muted-foreground"><Plus size={24} className="rotate-45" /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2 -mr-2">
+                {pendingInvoices.map((inv) => (
+                  <div 
+                    key={inv.id} 
+                    className={cn(
+                        "p-4 rounded-3xl border transition-all",
+                        selectedPendingIds.includes(inv.id) 
+                            ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" 
+                            : "bg-gray-50 dark:bg-gray-800/50 border-transparent opacity-60"
+                    )}
+                    onClick={() => {
+                        if (selectedPendingIds.includes(inv.id)) {
+                            setSelectedPendingIds(selectedPendingIds.filter(id => id !== inv.id));
+                        } else {
+                            setSelectedPendingIds([...selectedPendingIds, inv.id]);
+                        }
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xl">{inv.icon || "🧾"}</span>
+                            <div>
+                                <h4 className="font-bold text-sm">{inv.store}</h4>
+                                <p className="text-[10px] text-muted-foreground">{inv.date}</p>
+                            </div>
+                        </div>
+                        <p className="font-bold text-sm">${inv.totalAmount.toLocaleString()}</p>
+                    </div>
+                    
+                    {inv.matchedManualInfo ? (
+                        <div className="mt-3 p-3 bg-white dark:bg-gray-900 rounded-2xl flex items-center gap-3 border border-blue-100 dark:border-blue-900/50">
+                            <div className="bg-blue-500/10 p-1.5 rounded-lg text-blue-500">
+                                <Check size={14} />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400">發現相符的手動記帳</p>
+                                <p className="text-[9px] text-muted-foreground">
+                                    {inv.matchedManualInfo.date === inv.date ? "當日" : (inv.matchedManualInfo.date < inv.date ? "前一日" : "後一日")} • ${inv.matchedManualInfo.amount} • {inv.matchedManualInfo.note}
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="mt-2 text-[9px] text-muted-foreground px-1 italic">未發現相符的手動記帳</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-6">
+                <button 
+                  onClick={async () => {
+                      if (!confirm("確定要捨棄這些匯入資料嗎？")) return;
+                      await fetch("/api/invoices/confirm", {
+                          method: "DELETE",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ userId, invoiceIds: pendingInvoices.map(p => p.id) }),
+                      });
+                      setIsPendingModalOpen(false);
+                      fetchPending();
+                  }}
+                  className="bg-gray-100 dark:bg-gray-800 text-muted-foreground py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all"
+                >
+                  全部捨棄
+                </button>
+                <button 
+                  onClick={handleConfirmImport}
+                  disabled={selectedPendingIds.length === 0}
+                  className="bg-blue-600 text-white py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-30"
+                >
+                  匯入選取資料 ({selectedPendingIds.length})
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+

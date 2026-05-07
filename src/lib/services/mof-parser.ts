@@ -87,32 +87,48 @@ async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
   const db = getDb();
   if (!db) return;
   
-  const batch = db.batch();
-  
-  // Search for potential manual entries
+  // 1. Fuzzy Match Logic (+/- 1 day)
+  const targetDate = new Date(invoice.date);
+  const prevDate = new Date(targetDate);
+  prevDate.setDate(targetDate.getDate() - 1);
+  const nextDate = new Date(targetDate);
+  nextDate.setDate(targetDate.getDate() + 1);
+
+  const dateStrings = [
+    invoice.date,
+    prevDate.toISOString().split("T")[0].replace(/-/g, "/"),
+    nextDate.toISOString().split("T")[0].replace(/-/g, "/"),
+  ];
+
+  // Search for potential manual entries across these dates
   const manualQuery = await db
     .collection("manual_expenses")
     .where("userId", "==", userId)
-    .where("date", "==", invoice.date)
+    .where("date", "in", dateStrings)
     .where("amount", "==", invoice.totalAmount)
     .where("matched", "==", false)
     .limit(1)
     .get();
 
-  let matchedManualId = null;
+  let matchedManualInfo = null;
   if (!manualQuery.empty) {
-    matchedManualId = manualQuery.docs[0].id;
-    const manualRef = db.collection("manual_expenses").doc(matchedManualId);
-    batch.update(manualRef, { matched: true, matchedInvNum: invoice.invNum });
+    const doc = manualQuery.docs[0];
+    const data = doc.data();
+    matchedManualInfo = {
+      id: doc.id,
+      date: data.date,
+      amount: data.amount,
+      note: data.note || data.category,
+    };
   }
 
-  const invoiceRef = db.collection("invoices").doc();
-  batch.set(invoiceRef, {
+  // 2. Save to PENDING collection
+  // Instead of direct import, we save to a pending queue for user confirmation
+  await db.collection("pending_invoices").add({
     ...invoice,
     userId,
-    matchedManualId,
+    matchedManualInfo,
+    status: "pending",
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
-
-  await batch.commit();
 }
