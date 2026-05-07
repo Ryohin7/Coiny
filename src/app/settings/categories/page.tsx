@@ -17,12 +17,16 @@ interface Category {
 }
 
 const DEFAULT_CATEGORIES = [
-  { name: "餐飲", icon: "🍱", keywords: ["咖啡", "麵包", "早餐", "飲料", "珍奶"] },
-  { name: "超商", icon: "🏪", keywords: ["統一超商", "全家", "7-11"] },
+  { name: "餐飲", icon: "🍱", keywords: ["咖啡", "麵包", "早餐", "飲料", "珍奶", "午餐", "晚餐", "宵夜"] },
+  { name: "超商", icon: "🏪", keywords: ["統一超商", "全家", "7-11", "小7"] },
   { name: "生活雜貨", icon: "🧻", keywords: ["衛生紙", "洗衣精", "沐浴乳"] },
-  { name: "交通", icon: "🚗", keywords: ["停車費", "GOGORO", "加油"] },
-  { name: "購物", icon: "🛍️", keywords: ["衣服", "鞋子", "蝦皮"] },
-  { name: "醫療", icon: "🏥", keywords: ["診所", "藥局", "看病"] },
+  { name: "交通", icon: "🚗", keywords: ["停車費", "GOGORO", "加油", "悠遊卡", "TPASS", "停車", "公車", "電池服務費", "IRENT", "GOSHARE"] },
+  { name: "購物", icon: "🛍️", keywords: ["衣服", "鞋子", "蝦皮", "雜貨"] },
+  { name: "醫療", icon: "🏥", keywords: ["診所", "藥局", "看病", "領藥"] },
+  { name: "訂閱", icon: "📺", keywords: ["NETFLIX", "SPOTIFY", "YOUTUBE", "DISNEY", "訂閱"] },
+  { name: "房租", icon: "🏠", keywords: ["房租", "租金", "管理費"] },
+  { name: "娛樂", icon: "🎮", keywords: ["電影", "遊戲", "KTV", "演唱會"] },
+  { name: "旅行", icon: "✈️", keywords: ["機票", "飯店", "住宿", "旅遊"] },
 ];
 
 export default function CategoryManagementPage() {
@@ -111,9 +115,21 @@ export default function CategoryManagementPage() {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (!confirm("確定要刪除此分類嗎？")) return;
     try {
-      const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+      // 1. 檢查是否有關聯資料
+      const checkRes = await fetch(`/api/categories/${id}?userId=${userId}`);
+      const checkData = await checkRes.json();
+      
+      if (checkData.count > 0) {
+        if (!confirm(`此分類下還有 ${checkData.count} 筆記帳資料，刪除分類將會連同這些資料一併刪除，確定要繼續嗎？`)) {
+          return;
+        }
+      } else {
+        if (!confirm("確定要刪除此分類嗎？")) return;
+      }
+
+      // 2. 執行刪除
+      const res = await fetch(`/api/categories/${id}?userId=${userId}`, { method: "DELETE" });
       if (res.ok) fetchCategories();
     } catch (error) {
       alert("刪除失敗");
@@ -189,17 +205,6 @@ export default function CategoryManagementPage() {
                     </button>
                   </div>
                 </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {cat.keywords.map((kw, i) => (
-                    <span key={i} className="text-[10px] font-bold px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-full text-muted-foreground">
-                      #{kw}
-                    </span>
-                  ))}
-                  {cat.keywords.length === 0 && (
-                    <span className="text-[10px] text-muted-foreground italic">無關鍵字，點擊編輯新增</span>
-                  )}
-                </div>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -209,13 +214,6 @@ export default function CategoryManagementPage() {
             className="w-full py-6 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-[2.5rem] text-muted-foreground font-bold flex items-center justify-center gap-2 hover:border-blue-500 hover:text-blue-500 transition-all"
           >
             <Plus size={20} /> 新增分類
-          </button>
-
-          <button 
-            onClick={() => seedDefaultCategories(true)}
-            className="w-full py-4 text-xs text-muted-foreground font-bold flex items-center justify-center gap-2 hover:text-blue-500 transition-colors"
-          >
-            <Loader2 size={14} className="animate-spin-slow" /> 補齊/還原基礎分類
           </button>
         </div>
       )}

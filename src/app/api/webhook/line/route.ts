@@ -63,11 +63,25 @@ export async function POST(req: Request) {
         }
 
         // Use categoryInput to classify and get icon
-        const { category, icon } = await classifyMerchant(categoryInput, [], undefined, userId);
+        const classification = await classifyMerchant(categoryInput, [], undefined, userId);
+        
+        let finalCategory = categoryInput;
+        let finalRemark = remark;
+
+        // 智慧分類邏輯：
+        // 如果輸入的關鍵字匹配到了具體分類 (非「其他」)，且跟輸入內容不同
+        // 則自動將輸入內容轉為備註，並將分類修正為系統分類
+        // 例如輸入「NETFLIX 390」，分類會變成「訂閱」，備註變成「NETFLIX」
+        if (classification.category !== "其他" && classification.category !== categoryInput) {
+          finalCategory = classification.category;
+          finalRemark = remark ? `${categoryInput} (${remark})` : categoryInput;
+        }
+        
+        const icon = classification.icon;
         
         // Determine if it's income (heuristic)
         const incomeKeywords = ["收入", "薪資", "獎金", "利息", "中獎", "投資"];
-        const isIncome = incomeKeywords.some(kw => categoryInput.includes(kw));
+        const isIncome = incomeKeywords.some(kw => finalCategory.includes(kw) || categoryInput.includes(kw));
 
         try {
           const db = getDb();
@@ -80,18 +94,18 @@ export async function POST(req: Request) {
             userId,
             amount,
             date: dateStr,
-            note: remark || "手動記帳",
-            category: categoryInput, // Use user provided category
-            icon: icon, // Use classified icon
+            note: finalRemark || "手動記帳",
+            category: finalCategory,
+            icon: icon,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             matched: false,
             originalText: text,
             isIncome,
           };
 
-          // If remark is provided, add it to items to show in details
-          if (remark) {
-            expenseData.items = [{ name: remark, price: amount }];
+          // Update items for details view
+          if (finalRemark) {
+            expenseData.items = [{ name: finalRemark, price: amount }];
           }
 
           await db.collection("manual_expenses").add(expenseData);
@@ -102,7 +116,7 @@ export async function POST(req: Request) {
               messages: [
                 {
                   type: "text",
-                  text: `✅ 已記錄${isIncome ? "收入" : "支出"}：${amount} 元 (${dateStr})\n分類：${categoryInput}\n${remark ? `備註：${remark}` : ""}`,
+                  text: `✅ 已記錄${isIncome ? "收入" : "支出"}：${amount} 元 (${dateStr})\n分類：${finalCategory}${finalCategory !== categoryInput ? ` (${categoryInput})` : ""}\n${finalRemark ? `備註：${finalRemark}` : ""}`,
                 },
               ],
             });

@@ -45,12 +45,27 @@ const SYSTEM_CATEGORIES: CategoryRule[] = [
   {
     name: "娛樂",
     icon: "🎮",
-    keywords: ["電影", "KTV", "遊戲", "門票", "訂閱", "NETFLIX", "SPOTIFY", "迪士尼", "演唱會", "展覽"],
+    keywords: ["電影", "KTV", "遊戲", "門票", "演唱會", "展覽"],
   },
   {
     name: "醫療",
     icon: "🏥",
-    keywords: ["診所", "藥局", "掛號", "感冒", "牙醫", "醫院", "健保", "看病", "口罩"],
+    keywords: ["診所", "藥局", "掛號", "感冒", "牙醫", "醫院", "健保", "看病", "口罩", "領藥"],
+  },
+  {
+    name: "訂閱",
+    icon: "📺",
+    keywords: ["NETFLIX", "SPOTIFY", "YOUTUBE", "DISNEY", "訂閱"],
+  },
+  {
+    name: "房租",
+    icon: "🏠",
+    keywords: ["房租", "租金", "管理費"],
+  },
+  {
+    name: "旅行",
+    icon: "✈️",
+    keywords: ["機票", "飯店", "住宿", "旅遊"],
   },
 ];
 
