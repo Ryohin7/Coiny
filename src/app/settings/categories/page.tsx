@@ -20,7 +20,7 @@ const DEFAULT_CATEGORIES = [
   { name: "餐飲", icon: "🍱", keywords: ["咖啡", "麵包", "早餐", "飲料", "珍奶", "午餐", "晚餐", "宵夜"] },
   { name: "超商", icon: "🏪", keywords: ["統一超商", "全家", "7-11", "小7"] },
   { name: "生活雜貨", icon: "🧻", keywords: ["衛生紙", "洗衣精", "沐浴乳"] },
-  { name: "交通", icon: "🚗", keywords: ["停車費", "GOGORO", "加油", "悠遊卡", "TPASS", "停車", "公車", "電池服務費", "IRENT" "GOSHARE"] },
+  { name: "交通", icon: "🚗", keywords: ["停車費", "GOGORO", "加油", "悠遊卡", "TPASS", "停車", "公車", "電池服務費", "IRENT", "GOSHARE"] },
   { name: "購物", icon: "🛍️", keywords: ["衣服", "鞋子", "蝦皮", "雜貨"] },
   { name: "醫療", icon: "🏥", keywords: ["診所", "藥局", "看病", "領藥"] },
 ];
