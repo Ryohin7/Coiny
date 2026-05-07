@@ -39,16 +39,35 @@ export async function POST(req: Request) {
 
       if (!userId) continue;
 
-      // Regex to match "載具 69 午餐" or "記帳 69元 飲料"
-      const match = text.match(/^(載具|記帳)\s*(\d+)\s*(.*)/i);
+      // Match: [Date] [Category] [Amount] [Remark]
+      // Regex: Optional Date (M/D), Mandatory Category (non-space), Mandatory Amount (digits), Optional Remark (anything)
+      const commandMatch = text.match(/^(?:(\d{1,2}\/\d{1,2})\s+)?(\S+)\s+(\d+)(?:\s+(.+))?$/);
 
-      if (match) {
-        const amount = parseInt(match[2]);
-        const note = match[3]?.trim() || "手動記帳";
-        const { category, icon } = await classifyMerchant(note, [], undefined, userId);
+      if (commandMatch) {
+        const datePart = commandMatch[1];
+        const categoryInput = commandMatch[2];
+        const amount = parseInt(commandMatch[3]);
+        const remark = commandMatch[4]?.trim() || "";
+
+        let dateStr: string;
+        const now = new Date();
+        const currentYear = now.getFullYear();
+
+        if (datePart) {
+          const [m, d] = datePart.split("/").map(Number);
+          // Set to current year, specific month/day
+          const targetDate = new Date(currentYear, m - 1, d);
+          dateStr = targetDate.toISOString().split("T")[0].replace(/-/g, "/");
+        } else {
+          dateStr = now.toISOString().split("T")[0].replace(/-/g, "/");
+        }
+
+        // Use categoryInput to classify and get icon
+        const { category, icon } = await classifyMerchant(categoryInput, [], undefined, userId);
         
-        const date = new Date();
-        const dateStr = date.toISOString().split("T")[0].replace(/-/g, "/"); // YYYY/MM/DD
+        // Determine if it's income (heuristic)
+        const incomeKeywords = ["收入", "薪資", "獎金", "利息", "中獎", "投資"];
+        const isIncome = incomeKeywords.some(kw => categoryInput.includes(kw));
 
         try {
           const db = getDb();
@@ -57,17 +76,25 @@ export async function POST(req: Request) {
             continue;
           }
 
-          await db.collection("manual_expenses").add({
+          const expenseData: any = {
             userId,
             amount,
             date: dateStr,
-            note,
-            category,
-            icon,
+            note: remark || "手動記帳",
+            category: categoryInput, // Use user provided category
+            icon: icon, // Use classified icon
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             matched: false,
             originalText: text,
-          });
+            isIncome,
+          };
+
+          // If remark is provided, add it to items to show in details
+          if (remark) {
+            expenseData.items = [{ name: remark, price: amount }];
+          }
+
+          await db.collection("manual_expenses").add(expenseData);
 
           if ("replyToken" in event && event.replyToken) {
             await client.replyMessage({
@@ -75,7 +102,7 @@ export async function POST(req: Request) {
               messages: [
                 {
                   type: "text",
-                  text: `✅ 已記錄：${amount} 元 (${dateStr})\n待財政部資料彙整後將自動對帳。`,
+                  text: `✅ 已記錄${isIncome ? "收入" : "支出"}：${amount} 元 (${dateStr})\n分類：${categoryInput}\n${remark ? `備註：${remark}` : ""}`,
                 },
               ],
             });

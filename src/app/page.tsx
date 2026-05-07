@@ -4,6 +4,12 @@ import { motion } from "framer-motion";
 import { Plus, CreditCard, ShoppingBag, Utensils, ReceiptText, Loader2, Trash2, Edit3 } from "lucide-react";
 import { useLiff } from "@/components/providers/LiffProvider";
 import { useEffect, useState } from "react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export default function HomePage() {
   const { profile, userId } = useLiff();
@@ -31,6 +37,9 @@ export default function HomePage() {
 
   const totalAmount = records.reduce((sum, rec) => {
     // 僅加總未對帳的手動支出或所有發票支出 (避免重複計算)
+    // 排除收入
+    if (rec.isIncome) return sum;
+    
     if (rec.type === "invoice" || (rec.type === "manual" && !rec.matched)) {
       return sum + (rec.amount || rec.totalAmount || 0);
     }
@@ -135,9 +144,9 @@ export default function HomePage() {
       </motion.div>
 
       {/* Expense List */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         <h3 className="text-lg font-semibold px-1">最近交易</h3>
-        <div className="space-y-3">
+        <div className="space-y-8">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
               <Loader2 className="animate-spin" />
@@ -150,34 +159,63 @@ export default function HomePage() {
               <p className="text-xs opacity-60">用 LINE 傳送發票或手動新增吧！</p>
             </div>
           ) : (
-            records.map((record, index) => {
-              const isInvoice = record.type === "invoice";
-              const amount = isInvoice ? record.totalAmount : record.amount;
-              const storeName = isInvoice ? record.store : (record.matched ? "已對帳" : "手動記帳");
+            Object.entries(
+              records.reduce((groups: any, record) => {
+                const date = record.date; // YYYY/MM/DD
+                if (!groups[date]) groups[date] = [];
+                groups[date].push(record);
+                return groups;
+              }, {})
+            ).sort((a, b) => b[0].localeCompare(a[0])).map(([dateStr, groupRecords]: [string, any]) => {
+              const dateObj = new Date(dateStr);
+              const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+              const dd = String(dateObj.getDate()).padStart(2, "0");
+              const dayOfWeek = ["日", "一", "二", "三", "四", "五", "六"][dateObj.getDay()];
               
               return (
-                <motion.div
-                  key={record.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => setSelectedRecord(record)}
-                  className="glass p-4 rounded-3xl flex items-center gap-4 hover:scale-[1.02] active:scale-95 transition-transform cursor-pointer"
-                >
-                  <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-2xl text-xl">
-                    {record.icon || (isInvoice ? "🧾" : "📝")}
+                <div key={dateStr} className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="text-sm font-bold opacity-80">{mm}/{dd} ({dayOfWeek})</span>
+                    <div className="h-[1px] flex-1 bg-gray-100 dark:bg-gray-800" />
                   </div>
-                  <div className="flex-1 overflow-hidden">
-                    <h4 className="font-semibold text-sm truncate">{storeName}</h4>
-                    <p className="text-[10px] text-muted-foreground">{record.date} • {record.category || "未分類"}</p>
+                  <div className="space-y-2">
+                    {groupRecords.map((record: any) => {
+                      const isInvoice = record.type === "invoice";
+                      const amount = isInvoice ? record.totalAmount : record.amount;
+                      
+                      // Get description: if invoice, join items; if manual, use note
+                      let description = record.note || "";
+                      if (isInvoice && record.items) {
+                        description = record.items.map((i: any) => i.name).join("、");
+                      }
+
+                      return (
+                        <motion.div
+                          key={record.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          onClick={() => setSelectedRecord(record)}
+                          className="p-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-2xl transition-colors cursor-pointer group"
+                        >
+                          <div className="flex-1 min-w-0 pr-4">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <h4 className="font-bold text-sm truncate">{record.category || "未分類"}</h4>
+                              {isInvoice && (
+                                <span className="text-[9px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-muted-foreground rounded-md font-bold">載具</span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground truncate">{description || "尚無明細"}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className={cn("font-bold text-sm", record.isIncome ? "text-green-500" : "text-black dark:text-white")}>
+                              {record.isIncome ? "+" : "-"}${amount.toLocaleString()}
+                            </p>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-sm">-${amount.toLocaleString()}</p>
-                    <p className={record.matched || isInvoice ? "text-[10px] text-green-500 font-medium" : "text-[10px] text-amber-500 font-medium"}>
-                      {isInvoice ? "● 已彙整" : (record.matched ? "● 已對帳" : "○ 待對帳")}
-                    </p>
-                  </div>
-                </motion.div>
+                </div>
               );
             })
           )}
