@@ -62,33 +62,44 @@ export async function POST(req: Request) {
           dateStr = now.toISOString().split("T")[0].replace(/-/g, "/");
         }
 
-        // Use categoryInput to classify and get icon
-        const classification = await classifyMerchant(categoryInput, [], undefined, userId);
-        
-        let finalCategory = categoryInput;
-        let finalRemark = remark;
-
-        // 智慧分類邏輯：
-        // 如果輸入的關鍵字匹配到了具體分類 (非「其他」)，且跟輸入內容不同
-        // 則自動將輸入內容轉為備註，並將分類修正為系統分類
-        // 例如輸入「NETFLIX 390」，分類會變成「訂閱」，備註變成「NETFLIX」
-        if (classification.category !== "其他" && classification.category !== categoryInput) {
-          finalCategory = classification.category;
-          finalRemark = remark ? `${categoryInput} (${remark})` : categoryInput;
-        }
-        
-        const icon = classification.icon;
-        
-        // Determine if it's income (heuristic)
-        const incomeKeywords = ["收入", "薪資", "獎金", "利息", "中獎", "投資"];
-        const isIncome = incomeKeywords.some(kw => finalCategory.includes(kw) || categoryInput.includes(kw));
-
         try {
           const db = getDb();
           if (!db) {
             console.error("Database not initialized");
             continue;
           }
+
+          // 1. 取得用戶自訂分類
+          const catSnapshot = await db.collection("categories").where("userId", "==", userId).get();
+          const userCats = catSnapshot.docs.map(doc => doc.data());
+          
+          // 2. 尋找匹配的分類 (名稱或關鍵字)
+          // 優先比對名稱，再比對關鍵字
+          const matchedCat = userCats.find(c => c.name === categoryInput) || 
+                             userCats.find(c => c.keywords && c.keywords.some((k: string) => k.toUpperCase() === categoryInput.toUpperCase()));
+
+          if (!matchedCat) {
+            if ("replyToken" in event && event.replyToken) {
+              await client.replyMessage({
+                replyToken: event.replyToken,
+                messages: [{ type: "text", text: `❌ 沒有「${categoryInput}」這個分類，請先至分類管理設定。` }],
+              });
+            }
+            continue;
+          }
+
+          const finalCategory = matchedCat.name;
+          const icon = matchedCat.icon || "💰";
+          let finalRemark = remark;
+
+          // 如果輸入的是關鍵字而不是分類名稱，自動將關鍵字轉入備註
+          if (finalCategory !== categoryInput) {
+            finalRemark = remark ? `${categoryInput} (${remark})` : categoryInput;
+          }
+
+          // Determine if it's income (heuristic)
+          const incomeKeywords = ["收入", "薪資", "獎金", "利息", "中獎", "投資"];
+          const isIncome = incomeKeywords.some(kw => finalCategory.includes(kw) || categoryInput.includes(kw));
 
           const expenseData: any = {
             userId,
