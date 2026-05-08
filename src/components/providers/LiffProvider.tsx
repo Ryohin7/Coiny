@@ -31,7 +31,10 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
   const [emailID, setEmailID] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     const initLiff = async () => {
       try {
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
@@ -94,8 +97,17 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
     );
   }
 
+  // 防止 Hydration Mismatch：初次渲染（Server-side）不應包含 window 邏輯
+  if (!mounted) {
+    return (
+      <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, emailID, error }}>
+        <div style={{ opacity: 0 }}>{children}</div>
+      </LiffContext.Provider>
+    );
+  }
+
   // 非首頁且未登入時，顯示跳轉畫面
-  if (!isLoggedIn && typeof window !== "undefined" && window.location.pathname !== "/") {
+  if (!isLoggedIn && window.location.pathname !== "/") {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-[#F8F7F4] dark:bg-[#050505]">
         <div className="text-center space-y-6 flex flex-col items-center">
