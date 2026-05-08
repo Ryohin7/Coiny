@@ -91,22 +91,61 @@ export default function HomePage() {
     }
   };
 
-  const filteredRecords = records.filter(rec => {
-    const d = new Date(rec.date);
-    const matchesDate = d.getFullYear() === currentYear && (d.getMonth() + 1) === currentMonth;
-    const matchesSearch = !searchTerm || 
-      (rec.note || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (rec.category || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (rec.items || []).some((item: any) => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesDate && matchesSearch;
-  });
+  const displayRecords = useMemo(() => {
+    const filtered = records.filter(rec => {
+      const d = new Date(rec.date);
+      const matchesDate = d.getFullYear() === currentYear && (d.getMonth() + 1) === currentMonth;
+      const matchesSearch = !searchTerm || 
+        (rec.note || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (rec.category || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (rec.items || []).some((item: any) => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      return matchesDate && matchesSearch;
+    });
 
-  const totalExpense = filteredRecords.reduce((sum, rec) => {
+    // 處理合併邏輯
+    const invoiceMap = new Map(filtered.filter(r => r.type === "invoice").map(r => [r.id, r]));
+    const result: any[] = [];
+    const matchedInvoiceIds = new Set();
+
+    filtered.forEach(rec => {
+      if (rec.type === "manual") {
+        if (rec.matched && rec.matchedInvoiceId) {
+          const inv = invoiceMap.get(rec.matchedInvoiceId);
+          if (inv) {
+            // 合併：保留手動備註，但加入發票明細
+            result.push({
+              ...rec,
+              invoiceItems: inv.items,
+              invoiceStore: inv.store,
+              invoiceAmount: inv.totalAmount,
+              isMatched: true
+            });
+            matchedInvoiceIds.add(inv.id);
+          } else {
+            result.push(rec);
+          }
+        } else {
+          result.push(rec);
+        }
+      }
+    });
+
+    // 加入未被匹配的發票
+    filtered.forEach(rec => {
+      if (rec.type === "invoice" && !matchedInvoiceIds.has(rec.id)) {
+        result.push(rec);
+      }
+    });
+
+    return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [records, currentYear, currentMonth, searchTerm]);
+
+  const filteredRecords = displayRecords;
+
+  const totalExpense = displayRecords.reduce((sum, rec) => {
     if (rec.isIncome) return sum;
-    if (rec.type === "invoice" || (rec.type === "manual" && !rec.matched)) {
-      return sum + (rec.amount || rec.totalAmount || 0);
-    }
-    return sum;
+    const amount = rec.type === "invoice" ? rec.totalAmount : (rec.isMatched ? rec.invoiceAmount : rec.amount);
+    return sum + (amount || 0);
   }, 0);
 
   const totalIncome = filteredRecords.reduce((sum, rec) => {
@@ -412,14 +451,21 @@ export default function HomePage() {
                             <div className="flex items-center gap-2 mb-0.5">
                               <h4 className="font-bold text-sm truncate">{record.category || "未分類"}</h4>
                               {isInvoice && (
-                                <span className="text-[9px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-muted-foreground rounded-md font-bold">載具</span>
+                                <span className="text-[9px] px-1.5 py-0.5 bg-white dark:bg-gray-800 text-[#E9720C] rounded-md font-bold border border-orange-100 dark:border-orange-900/50">載具</span>
+                              )}
+                              {record.isMatched && (
+                                <span className="text-[9px] px-1.5 py-0.5 bg-orange-50 dark:bg-orange-900/20 text-[#E9720C] rounded-md font-bold flex items-center gap-1">
+                                  <Check size={10} /> 已對帳
+                                </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-muted-foreground truncate">{description || "尚無明細"}</p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {record.isMatched ? `${record.note} (${record.invoiceStore})` : (description || "尚無明細")}
+                            </p>
                           </div>
                           <div className="text-right">
                             <p className={cn("font-bold text-sm", record.isIncome ? "text-green-500" : "text-black dark:text-white")}>
-                              {record.isIncome ? "+" : "-"}${amount.toLocaleString()}
+                              {record.isIncome ? "+" : "-"}${ (record.isMatched ? record.invoiceAmount : amount).toLocaleString() }
                             </p>
                           </div>
                         </motion.div>
@@ -451,6 +497,17 @@ export default function HomePage() {
           >
             {!isEditing ? (
               <div className="space-y-6">
+                {selectedRecord.isMatched && (
+                  <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-800 p-4 rounded-3xl flex items-center gap-4">
+                    <div className="bg-orange-500 p-2 rounded-2xl text-white">
+                      <Check size={20} />
+                    </div>
+                    <div>
+                      <p className="text-orange-600 dark:text-orange-400 font-bold text-sm">對帳成功</p>
+                      <p className="text-orange-500/60 dark:text-orange-400/60 text-[10px]">此筆紀錄已與載具發票完全匹配</p>
+                    </div>
+                  </div>
+                )}
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -459,8 +516,17 @@ export default function HomePage() {
                         {selectedRecord.category || "未分類"}
                       </span>
                     </div>
-                    <h3 className="text-2xl font-bold">{selectedRecord.store || (selectedRecord.matched ? "對帳交易" : "手動記帳")}</h3>
-                    <p className="text-muted-foreground text-sm">{selectedRecord.date}</p>
+                    <h3 className="text-2xl font-bold">
+                      {selectedRecord.isMatched ? selectedRecord.note : (selectedRecord.store || selectedRecord.note || "手動記帳")}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-muted-foreground text-sm">{selectedRecord.date}</p>
+                      {selectedRecord.isMatched && (
+                        <span className="text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-600 px-2 py-0.5 rounded-full font-bold">
+                          已對帳: {selectedRecord.invoiceStore}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button 
@@ -479,8 +545,8 @@ export default function HomePage() {
                 </div>
 
                 <div className="border-t border-b border-gray-100 dark:border-gray-800 py-6 max-h-[40vh] overflow-y-auto space-y-4">
-                  {selectedRecord.items && selectedRecord.items.length > 0 ? (
-                    selectedRecord.items.map((item: any, i: number) => (
+                  {(selectedRecord.invoiceItems || selectedRecord.items || []).length > 0 ? (
+                    (selectedRecord.invoiceItems || selectedRecord.items).map((item: any, i: number) => (
                       <div key={i} className="flex justify-between items-center text-sm">
                         <span className="text-muted-foreground flex-1 pr-4">{item.name}</span>
                         <span className={`font-medium ${item.price < 0 ? "text-red-500" : ""}`}>
@@ -496,7 +562,7 @@ export default function HomePage() {
                 <div className="flex justify-between items-center pt-2">
                   <span className="font-bold text-lg">總計金額</span>
                   <span className="text-2xl font-black">
-                    ${(selectedRecord.totalAmount || selectedRecord.amount).toLocaleString()}
+                    ${(selectedRecord.invoiceAmount || selectedRecord.totalAmount || selectedRecord.amount).toLocaleString()}
                   </span>
                 </div>
                 
