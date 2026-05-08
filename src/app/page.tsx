@@ -15,6 +15,8 @@ export default function HomePage() {
   const { profile, userId } = useLiff();
   const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
 
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -86,13 +88,25 @@ export default function HomePage() {
     }
   };
 
-  const totalAmount = records.reduce((sum, rec) => {
+  const filteredRecords = records.filter(rec => {
+    const d = new Date(rec.date);
+    return d.getFullYear() === currentYear && (d.getMonth() + 1) === currentMonth;
+  });
+
+  const totalExpense = filteredRecords.reduce((sum, rec) => {
     if (rec.isIncome) return sum;
     if (rec.type === "invoice" || (rec.type === "manual" && !rec.matched)) {
       return sum + (rec.amount || rec.totalAmount || 0);
     }
     return sum;
   }, 0);
+
+  const totalIncome = filteredRecords.reduce((sum, rec) => {
+    if (!rec.isIncome) return sum;
+    return sum + (rec.amount || 0);
+  }, 0);
+
+  const monthlyBalance = totalIncome - totalExpense;
 
   useEffect(() => {
     if (userId) {
@@ -163,8 +177,36 @@ export default function HomePage() {
           <p className="text-muted-foreground text-sm font-medium">👋 你好，{profile?.displayName || "用戶"}</p>
           <h1 className="text-3xl font-bold tracking-tight text-gradient">記帳明細</h1>
         </div>
-        <div className="bg-black dark:bg-white text-white dark:text-black p-3 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-transform">
-          <Plus size={24} />
+        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl">
+          <button 
+            onClick={() => {
+              if (currentMonth === 1) {
+                setCurrentYear(currentYear - 1);
+                setCurrentMonth(12);
+              } else {
+                setCurrentMonth(currentMonth - 1);
+              }
+            }}
+            className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div className="px-2 text-sm font-bold">
+            {currentYear}/{String(currentMonth).padStart(2, "0")}
+          </div>
+          <button 
+            onClick={() => {
+              if (currentMonth === 12) {
+                setCurrentYear(currentYear + 1);
+                setCurrentMonth(1);
+              } else {
+                setCurrentMonth(currentMonth + 1);
+              }
+            }}
+            className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all rotate-180"
+          >
+            <ChevronLeft size={18} />
+          </button>
         </div>
       </header>
 
@@ -173,19 +215,32 @@ export default function HomePage() {
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-black dark:bg-white text-white dark:text-black p-6 rounded-[2.5rem] space-y-4 shadow-2xl relative overflow-hidden group"
+            className="bg-black dark:bg-white text-white dark:text-black p-6 rounded-[2.5rem] space-y-6 shadow-2xl relative overflow-hidden group"
         >
             <div className="relative z-10">
-            <p className="opacity-70 text-sm font-medium">本月總支出</p>
-            <h2 className="text-4xl font-bold mt-1">${totalAmount.toLocaleString()}</h2>
-            <div className="flex gap-4 mt-6">
-                <div className="bg-white/10 dark:bg-black/10 px-4 py-2 rounded-full text-xs font-semibold backdrop-blur-md">
-                {records.length} 筆記錄
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="opacity-70 text-xs font-medium mb-1">本月結餘</p>
+                  <h2 className="text-4xl font-bold tracking-tighter">${monthlyBalance.toLocaleString()}</h2>
                 </div>
+                <div className="bg-white/10 dark:bg-black/10 px-4 py-2 rounded-2xl text-[10px] font-bold backdrop-blur-md">
+                  {filteredRecords.length} 筆交易
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/10 dark:border-black/10">
+                <div>
+                  <p className="opacity-60 text-[10px] font-medium uppercase tracking-wider mb-1">本月總收入</p>
+                  <p className="text-lg font-bold text-green-400 dark:text-green-600">+${totalIncome.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="opacity-60 text-[10px] font-medium uppercase tracking-wider mb-1">本月總支出</p>
+                  <p className="text-lg font-bold text-red-400 dark:text-red-600">-${totalExpense.toLocaleString()}</p>
+                </div>
+              </div>
             </div>
-            </div>
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <CreditCard size={120} strokeWidth={1} />
+            <div className="absolute -bottom-4 -right-4 p-4 opacity-10 group-hover:opacity-20 transition-all duration-500 group-hover:scale-110">
+              <CreditCard size={140} strokeWidth={1} />
             </div>
         </motion.div>
 
@@ -222,21 +277,28 @@ export default function HomePage() {
               <Loader2 className="animate-spin" />
               <p className="text-sm">載入資料中...</p>
             </div>
-          ) : records.length === 0 ? (
+          ) : filteredRecords.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
               <ReceiptText size={48} strokeWidth={1} className="opacity-30" />
-              <p className="text-sm">還沒有任何記帳記錄</p>
-              <p className="text-xs opacity-60">用 LINE 傳送發票或手動新增吧！</p>
+              <p className="text-sm">本月還沒有任何記帳記錄</p>
+              <p className="text-xs opacity-60">用 LINE 傳送發票或切換月份看看吧！</p>
             </div>
           ) : (
             Object.entries(
-              records.reduce((groups: any, record) => {
+              filteredRecords.reduce((groups: any, record) => {
                 const date = record.date; // YYYY/MM/DD
-                if (!groups[date]) groups[date] = [];
-                groups[date].push(record);
+                if (!groups[date]) groups[date] = { records: [], total: 0 };
+                groups[date].records.push(record);
+                
+                // Calculate daily total (only expenses)
+                if (!record.isIncome) {
+                  const amount = record.type === "invoice" ? record.totalAmount : record.amount;
+                  groups[date].total += (amount || 0);
+                }
+                
                 return groups;
               }, {})
-            ).sort((a, b) => b[0].localeCompare(a[0])).map(([dateStr, groupRecords]: [string, any]) => {
+            ).sort((a, b) => b[0].localeCompare(a[0])).map(([dateStr, group]: [string, any]) => {
               const dateObj = new Date(dateStr);
               const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
               const dd = String(dateObj.getDate()).padStart(2, "0");
@@ -244,12 +306,18 @@ export default function HomePage() {
               
               return (
                 <div key={dateStr} className="space-y-3">
-                  <div className="flex items-center gap-2 px-1">
-                    <span className="text-sm font-bold opacity-80">{mm}/{dd} ({dayOfWeek})</span>
-                    <div className="h-[1px] flex-1 bg-gray-100 dark:bg-gray-800" />
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold opacity-80">{mm}/{dd} ({dayOfWeek})</span>
+                    </div>
+                    {group.total > 0 && (
+                      <span className="text-[11px] font-bold text-muted-foreground/80">
+                        日支出 ${group.total.toLocaleString()}
+                      </span>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    {groupRecords.map((record: any) => {
+                    {group.records.map((record: any) => {
                       const isInvoice = record.type === "invoice";
                       const amount = isInvoice ? record.totalAmount : record.amount;
                       
