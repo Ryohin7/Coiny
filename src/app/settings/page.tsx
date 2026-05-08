@@ -39,7 +39,6 @@ export default function SettingsPage() {
   return (
     <div className="p-6 space-y-8 pb-24">
       <header className="pt-4">
-        <h1 className="text-3xl font-bold tracking-tight text-gradient">設定</h1>
         <p className="text-muted-foreground text-sm">管理您的對帳帳號與偏好</p>
       </header>
 

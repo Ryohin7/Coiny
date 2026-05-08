@@ -196,7 +196,6 @@ export default function AnalysisPage() {
     <div className="p-6 space-y-8 pb-32">
       {/* Header */}
       <header className="space-y-4 pt-4">
-        <h1 className="text-3xl font-bold tracking-tight text-gradient">數據分析</h1>
         
         {/* Date Selector */}
         <div className="flex items-center justify-between bg-white dark:bg-gray-900 p-2 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">

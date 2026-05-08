@@ -17,6 +17,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -90,7 +92,12 @@ export default function HomePage() {
 
   const filteredRecords = records.filter(rec => {
     const d = new Date(rec.date);
-    return d.getFullYear() === currentYear && (d.getMonth() + 1) === currentMonth;
+    const matchesDate = d.getFullYear() === currentYear && (d.getMonth() + 1) === currentMonth;
+    const matchesSearch = !searchTerm || 
+      (rec.note || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (rec.category || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (rec.items || []).some((item: any) => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesDate && matchesSearch;
   });
 
   const totalExpense = filteredRecords.reduce((sum, rec) => {
@@ -172,41 +179,78 @@ export default function HomePage() {
 
   return (
     <div className="p-6 space-y-8 pb-24">
-      <header className="flex justify-between items-end pt-4">
-        <div>
-          <p className="text-muted-foreground text-sm font-medium">👋 你好，{profile?.displayName || "用戶"}</p>
-          <h1 className="text-3xl font-bold tracking-tight text-gradient">記帳明細</h1>
-        </div>
-        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl">
-          <button 
-            onClick={() => {
-              if (currentMonth === 1) {
-                setCurrentYear(currentYear - 1);
-                setCurrentMonth(12);
-              } else {
-                setCurrentMonth(currentMonth - 1);
-              }
-            }}
-            className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <div className="px-2 text-sm font-bold">
-            {currentYear}/{String(currentMonth).padStart(2, "0")}
+      <header className="space-y-4 pt-4">
+        <div className="flex justify-between items-end">
+          <div>
+            <p className="text-muted-foreground text-sm font-medium">👋 你好，{profile?.displayName || "用戶"}</p>
+            <h1 className="text-3xl font-bold tracking-tight text-gradient">記帳明細</h1>
           </div>
           <button 
-            onClick={() => {
-              if (currentMonth === 12) {
-                setCurrentYear(currentYear + 1);
-                setCurrentMonth(1);
-              } else {
-                setCurrentMonth(currentMonth + 1);
-              }
-            }}
-            className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all rotate-180"
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+            className={cn("p-3 rounded-2xl transition-all shadow-sm", isSearchOpen ? "bg-black text-white dark:bg-white dark:text-black" : "bg-gray-100 dark:bg-gray-800 text-muted-foreground")}
           >
-            <ChevronLeft size={18} />
+            <Plus size={24} className={cn("transition-transform", isSearchOpen ? "rotate-45" : "rotate-0")} />
           </button>
+        </div>
+
+        <AnimatePresence>
+          {isSearchOpen && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="搜尋明細、備註或分類..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none"
+                />
+                {searchTerm && (
+                  <button 
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-black dark:hover:text-white"
+                  >
+                    <Plus size={18} className="rotate-45" />
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setCurrentYear(currentYear - 1)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <ChevronLeft size={16} />
+              </button>
+              <span className="text-lg font-black">{currentYear}年</span>
+              <button onClick={() => setCurrentYear(currentYear + 1)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <ChevronLeft size={16} className="rotate-180" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+              <button
+                key={m}
+                onClick={() => setCurrentMonth(m)}
+                className={cn(
+                  "flex-shrink-0 w-12 h-10 rounded-xl text-sm font-bold transition-all",
+                  currentMonth === m 
+                    ? "bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105" 
+                    : "bg-gray-100 dark:bg-gray-800 text-muted-foreground hover:bg-gray-200 dark:hover:bg-gray-700"
+                )}
+              >
+                {m}月
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
