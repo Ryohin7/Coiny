@@ -4,8 +4,8 @@ import { getDb } from "@/lib/firebase/admin";
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const { name, icon, keywords } = await req.json();
-
+    const { name, icon, keywords, isIncome } = await req.json();
+    
     const db = getDb();
     if (!db) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
@@ -13,6 +13,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       name,
       icon,
       keywords,
+      isIncome: isIncome ?? false,
       updatedAt: new Date(),
     });
 

@@ -296,32 +296,27 @@ export default function HomePage() {
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-black dark:bg-white text-white dark:text-black p-6 rounded-[2.5rem] space-y-6 shadow-2xl relative overflow-hidden group"
+            className="bg-black dark:bg-white text-white dark:text-black p-5 rounded-[2rem] shadow-2xl relative overflow-hidden group"
         >
             <div className="relative z-10">
-              <div className="flex justify-between items-start">
+              <div className="flex justify-between items-center">
                 <div>
-                  <p className="opacity-70 text-xs font-medium mb-1">本月結餘</p>
-                  <h2 className="text-4xl font-bold tracking-tighter">${monthlyBalance.toLocaleString()}</h2>
+                  <p className="opacity-60 text-[10px] font-medium uppercase tracking-wider mb-0.5">本月總支出</p>
+                  <p className="text-2xl font-black text-red-400 dark:text-red-500">{totalExpense.toLocaleString()}</p>
                 </div>
-                <div className="bg-white/10 dark:bg-black/10 px-4 py-2 rounded-2xl text-[10px] font-bold backdrop-blur-md">
-                  {filteredRecords.length} 筆交易
+                <div className="text-right">
+                  <p className="opacity-60 text-[10px] font-medium uppercase tracking-wider mb-0.5">本月總收入</p>
+                  <p className="text-2xl font-black text-green-400 dark:text-green-500">{totalIncome.toLocaleString()}</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/10 dark:border-black/10">
-                <div>
-                  <p className="opacity-60 text-[10px] font-medium uppercase tracking-wider mb-1">本月總收入</p>
-                  <p className="text-lg font-bold text-green-400 dark:text-green-600">+${totalIncome.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="opacity-60 text-[10px] font-medium uppercase tracking-wider mb-1">本月總支出</p>
-                  <p className="text-lg font-bold text-red-400 dark:text-red-600">-${totalExpense.toLocaleString()}</p>
-                </div>
+              <div className="mt-4 pt-3 border-t border-white/10 dark:border-black/10 flex justify-between items-center">
+                <p className="opacity-70 text-[10px] font-bold uppercase tracking-widest">結餘</p>
+                <p className="text-sm font-black tracking-tight">{monthlyBalance.toLocaleString()}</p>
               </div>
             </div>
-            <div className="absolute -bottom-4 -right-4 p-4 opacity-10 group-hover:opacity-20 transition-all duration-500 group-hover:scale-110">
-              <CreditCard size={140} strokeWidth={1} />
+            <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-700 group-hover:scale-110">
+              <CreditCard size={100} strokeWidth={1} />
             </div>
         </motion.div>
 
@@ -387,13 +382,14 @@ export default function HomePage() {
               
               return (
                 <div key={dateStr} className="space-y-3">
-                  <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl border-l-4 border-black dark:border-white shadow-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold opacity-80">{mm}/{dd} ({dayOfWeek})</span>
+                      <span className="text-sm font-black">{mm}/{dd}</span>
+                      <span className="text-[10px] font-bold opacity-50 uppercase">{dayOfWeek}</span>
                     </div>
                     {group.total > 0 && (
-                      <span className="text-[11px] font-bold text-muted-foreground/80">
-                        日支出 ${group.total.toLocaleString()}
+                      <span className="text-[11px] font-black text-red-500/80">
+                        -{group.total.toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -455,7 +451,7 @@ export default function HomePage() {
             initial={{ y: "100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
-            className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[2.5rem] p-8 relative z-10 shadow-2xl overflow-hidden"
+            className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[2.5rem] p-8 pb-32 sm:pb-8 relative z-10 shadow-2xl overflow-hidden"
           >
             {!isEditing ? (
               <div className="space-y-6">

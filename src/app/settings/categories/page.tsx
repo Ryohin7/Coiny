@@ -14,15 +14,23 @@ interface Category {
   name: string;
   icon: string;
   keywords: string[];
+  isIncome: boolean;
 }
 
 const DEFAULT_CATEGORIES = [
-  { name: "餐飲", icon: "🍱", keywords: ["咖啡", "麵包", "早餐", "飲料", "珍奶", "午餐", "晚餐", "宵夜"] },
-  { name: "超商", icon: "🏪", keywords: ["統一超商", "全家", "7-11", "小7"] },
-  { name: "生活雜貨", icon: "🧻", keywords: ["衛生紙", "洗衣精", "沐浴乳"] },
-  { name: "交通", icon: "🚗", keywords: ["停車費", "GOGORO", "加油", "悠遊卡", "TPASS", "停車", "公車", "電池服務費", "IRENT", "GOSHARE"] },
-  { name: "購物", icon: "🛍️", keywords: ["衣服", "鞋子", "蝦皮", "雜貨"] },
-  { name: "醫療", icon: "🏥", keywords: ["診所", "藥局", "看病", "領藥"] },
+  { name: "餐飲", icon: "🍱", isIncome: false, keywords: ["咖啡", "麵包", "早餐", "飲料", "珍奶", "午餐", "晚餐", "宵夜"] },
+  { name: "超商", icon: "🏪", isIncome: false, keywords: ["統一超商", "全家", "7-11", "小7"] },
+  { name: "生活雜貨", icon: "🧻", isIncome: false, keywords: ["衛生紙", "洗衣精", "沐浴乳"] },
+  { name: "交通", icon: "🚗", isIncome: false, keywords: ["停車費", "GOGORO", "加油", "悠遊卡", "TPASS", "停車", "公車", "電池服務費", "IRENT", "GOSHARE"] },
+  { name: "購物", icon: "🛍️", isIncome: false, keywords: ["衣服", "鞋子", "蝦皮", "雜貨"] },
+  { name: "醫療", icon: "🏥", isIncome: false, keywords: ["診所", "藥局", "看病", "領藥"] },
+];
+
+const DEFAULT_INCOME_CATEGORIES = [
+  { name: "薪水", icon: "💰", isIncome: true, keywords: ["薪資", "薪水", "SALARY"] },
+  { name: "獎金", icon: "🧧", isIncome: true, keywords: ["獎金", "分紅", "BONUS"] },
+  { name: "投資", icon: "📈", isIncome: true, keywords: ["股票", "股息", "投資", "利息"] },
+  { name: "交易", icon: "🤝", isIncome: true, keywords: ["賣出", "二手", "轉帳"] },
 ];
 
 export default function CategoryManagementPage() {
@@ -32,6 +40,7 @@ export default function CategoryManagementPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [newCat, setNewCat] = useState({ name: "", icon: "💰", keywords: "" });
+  const [activeTab, setActiveTab] = useState<"expense" | "income">("expense");
 
   useEffect(() => {
     if (userId) fetchCategories();
@@ -43,14 +52,14 @@ export default function CategoryManagementPage() {
       const data = await res.json();
 
       const userCats = data.categories as Category[];
+      const combinedDefaults = [...DEFAULT_CATEGORIES, ...DEFAULT_INCOME_CATEGORIES];
 
       // 檢查是否缺少基礎類別 (依名稱比對)
-      const missingDefaults = DEFAULT_CATEGORIES.filter(
+      const missingDefaults = combinedDefaults.filter(
         def => !userCats.some(userCat => userCat.name === def.name)
       );
 
       if (missingDefaults.length > 0 && userCats.length === 0) {
-        // 如果完全沒資料，執行全面種子化
         await seedDefaultCategories();
       } else {
         setCategories(userCats);
@@ -67,8 +76,9 @@ export default function CategoryManagementPage() {
       const currentRes = await fetch(`/api/categories?userId=${userId}`);
       const currentData = await currentRes.json();
       const currentNames = currentData.categories.map((c: any) => c.name);
+      const combinedDefaults = [...DEFAULT_CATEGORIES, ...DEFAULT_INCOME_CATEGORIES];
 
-      for (const cat of DEFAULT_CATEGORIES) {
+      for (const cat of combinedDefaults) {
         if (onlyMissing && currentNames.includes(cat.name)) continue;
 
         await fetch("/api/categories", {
@@ -97,6 +107,7 @@ export default function CategoryManagementPage() {
           userId,
           name: newCat.name,
           icon: newCat.icon,
+          isIncome: activeTab === "income",
           keywords: newCat.keywords.split(",").map(k => k.trim()).filter(k => k),
         }),
       });
@@ -130,6 +141,7 @@ export default function CategoryManagementPage() {
           name: editingCat.name,
           icon: editingCat.icon,
           keywords: editingCat.keywords,
+          isIncome: editingCat.isIncome
         }),
       });
       if (res.ok) {
@@ -159,9 +171,28 @@ export default function CategoryManagementPage() {
           <p className="text-sm text-muted-foreground">載入個人化設定中...</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          <AnimatePresence>
-            {categories.map((cat, index) => (
+        <div className="space-y-6">
+          {/* Tabs */}
+          <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-2xl">
+            <button
+              onClick={() => setActiveTab("expense")}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "expense" ? "bg-white dark:bg-gray-800 shadow-sm" : "text-muted-foreground"}`}
+            >
+              支出分類
+            </button>
+            <button
+              onClick={() => setActiveTab("income")}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "income" ? "bg-white dark:bg-gray-800 shadow-sm" : "text-muted-foreground"}`}
+            >
+              收入分類
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <AnimatePresence mode="popLayout">
+              {categories
+                .filter(cat => activeTab === "income" ? cat.isIncome : !cat.isIncome)
+                .map((cat, index) => (
               <motion.div
                 key={cat.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -238,8 +269,8 @@ export default function CategoryManagementPage() {
               className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-[2.5rem] p-8 relative z-10 shadow-2xl space-y-6"
             >
               <div className="flex justify-between items-center">
-                <h3 className="text-xl font-black">{editingCat ? "編輯分類" : "新增分類"}</h3>
-                <div className="text-3xl bg-gray-50 dark:bg-gray-800 w-16 h-16 flex items-center justify-center rounded-2xl">
+                <h3 className="text-xl font-black">{editingCat ? "編輯分類" : (activeTab === "income" ? "新增收入分類" : "新增支出分類")}</h3>
+                <div className={`text-3xl ${activeTab === "income" ? "bg-green-50 dark:bg-green-950/30" : "bg-gray-50 dark:bg-gray-800"} w-16 h-16 flex items-center justify-center rounded-2xl`}>
                   {editingCat ? editingCat.icon : newCat.icon}
                 </div>
               </div>

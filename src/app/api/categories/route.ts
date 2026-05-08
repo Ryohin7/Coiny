@@ -11,7 +11,14 @@ export async function GET(req: Request) {
     if (!db) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
     const snapshot = await db.collection("categories").where("userId", "==", userId).get();
-    const categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const categories = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return { 
+        id: doc.id, 
+        ...data,
+        isIncome: data.isIncome ?? false // 預設為支出
+      };
+    });
 
     return NextResponse.json({ categories });
   } catch (error: any) {
@@ -21,7 +28,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { userId, name, icon, keywords } = await req.json();
+    const { userId, name, icon, keywords, isIncome } = await req.json();
     if (!userId || !name) return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
 
     const db = getDb();
@@ -32,6 +39,7 @@ export async function POST(req: Request) {
       name,
       icon,
       keywords: keywords || [],
+      isIncome: isIncome ?? false,
       createdAt: new Date(),
     });
 
