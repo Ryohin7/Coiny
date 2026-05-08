@@ -174,18 +174,18 @@ export default function CategoryManagementPage() {
         <div className="space-y-6">
           {/* Tabs */}
           <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-2xl">
-              <button
-                onClick={() => setActiveTab("expense")}
-                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "expense" ? "bg-white dark:bg-gray-800 shadow-sm text-[#E9720C]" : "text-muted-foreground"}`}
-              >
-                支出分類
-              </button>
-              <button
-                onClick={() => setActiveTab("income")}
-                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "income" ? "bg-white dark:bg-gray-800 shadow-sm text-[#E9720C]" : "text-muted-foreground"}`}
-              >
-                收入分類
-              </button>
+            <button
+              onClick={() => setActiveTab("expense")}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "expense" ? "bg-white dark:bg-gray-800 shadow-sm text-[#E9720C]" : "text-muted-foreground"}`}
+            >
+              支出分類
+            </button>
+            <button
+              onClick={() => setActiveTab("income")}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "income" ? "bg-white dark:bg-gray-800 shadow-sm text-[#E9720C]" : "text-muted-foreground"}`}
+            >
+              收入分類
+            </button>
           </div>
 
           <div className="space-y-4">
@@ -193,47 +193,47 @@ export default function CategoryManagementPage() {
               {categories
                 .filter(cat => activeTab === "income" ? cat.isIncome : !cat.isIncome)
                 .map((cat, index) => (
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-white dark:bg-gray-900 p-6 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-800 space-y-4"
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{cat.icon}</span>
-                    <h3 className="font-black text-xl">{cat.name}</h3>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setEditingCat(cat)}
-                      className="text-muted-foreground p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl"
-                    >
-                      <Edit2 size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCategory(cat.id)}
-                      className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
+                  <motion.div
+                    key={cat.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="bg-white dark:bg-gray-900 p-6 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-800 space-y-4"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl">{cat.icon}</span>
+                        <h3 className="font-black text-xl">{cat.name}</h3>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditingCat(cat)}
+                          className="text-muted-foreground p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCategory(cat.id)}
+                          className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {cat.keywords.map((kw, i) => (
-                    <span key={i} className="text-[10px] font-bold px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-full text-muted-foreground">
-                      #{kw}
-                    </span>
-                  ))}
-                  {cat.keywords.length === 0 && (
-                    <span className="text-[10px] text-muted-foreground italic">無關鍵字，點擊編輯新增</span>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+                    <div className="flex flex-wrap gap-2">
+                      {cat.keywords.map((kw, i) => (
+                        <span key={i} className="text-[10px] font-bold px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-full text-muted-foreground">
+                          #{kw}
+                        </span>
+                      ))}
+                      {cat.keywords.length === 0 && (
+                        <span className="text-[10px] text-muted-foreground italic">無關鍵字，點擊編輯新增</span>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+            </AnimatePresence>
           </div>
 
           <button
