@@ -234,6 +234,7 @@ export default function CategoryManagementPage() {
               </motion.div>
             ))}
           </AnimatePresence>
+          </div>
 
           <button
             onClick={() => setIsAdding(true)}
