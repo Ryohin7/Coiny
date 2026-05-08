@@ -194,7 +194,7 @@ export default function HomePage() {
               setIsDatePickerOpen(!isDatePickerOpen);
               if (!isDatePickerOpen) setIsSearchOpen(false);
             }}
-            className="flex-1 flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-4 rounded-2xl transition-all active:scale-[0.98]"
+            className="flex-1 flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-2xl transition-all active:scale-[0.98] border border-gray-100 dark:border-gray-800 shadow-sm"
           >
             <span className="font-black text-sm">{currentYear}年 {String(currentMonth).padStart(2, "0")}月</span>
             <ChevronLeft size={18} className={cn("transition-transform duration-300", isDatePickerOpen ? "-rotate-90" : "rotate-180")} />
@@ -207,7 +207,7 @@ export default function HomePage() {
             }}
             className={cn(
               "p-4 rounded-2xl transition-all shadow-sm active:scale-[0.98]", 
-              isSearchOpen ? "bg-[#E9720C] text-white" : "bg-white/80 dark:bg-gray-800 text-muted-foreground"
+              isSearchOpen ? "bg-[#E9720C] text-white" : "bg-white dark:bg-gray-800 text-muted-foreground border border-gray-100 dark:border-gray-800 shadow-sm"
             )}
           >
             {isSearchOpen ? <Plus size={20} className="rotate-45" /> : <Search size={20} />}
@@ -300,22 +300,19 @@ export default function HomePage() {
             <div className="relative z-10">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="opacity-60 text-[10px] font-medium uppercase tracking-wider mb-0.5">本月總支出</p>
-                  <p className="text-2xl font-black text-red-400 dark:text-red-500">{totalExpense.toLocaleString()}</p>
+                  <p className="opacity-70 text-[10px] font-medium uppercase tracking-wider mb-0.5 text-white">本月總支出</p>
+                  <p className="text-2xl font-black text-white">{totalExpense.toLocaleString()}</p>
                 </div>
                 <div className="text-right">
-                  <p className="opacity-60 text-[10px] font-medium uppercase tracking-wider mb-0.5">本月總收入</p>
-                  <p className="text-2xl font-black text-green-400 dark:text-green-500">{totalIncome.toLocaleString()}</p>
+                  <p className="opacity-70 text-[10px] font-medium uppercase tracking-wider mb-0.5 text-white">本月總收入</p>
+                  <p className="text-2xl font-black text-white">{totalIncome.toLocaleString()}</p>
                 </div>
               </div>
               
               <div className="mt-4 pt-3 border-t border-white/20 flex justify-between items-center">
-                <p className="opacity-70 text-[10px] font-bold uppercase tracking-widest">結餘</p>
-                <p className="text-sm font-black tracking-tight">{monthlyBalance.toLocaleString()}</p>
+                <p className="opacity-80 text-[10px] font-bold uppercase tracking-widest text-white">結餘</p>
+                <p className="text-sm font-black tracking-tight text-white">{monthlyBalance.toLocaleString()}</p>
               </div>
-            </div>
-            <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-700 group-hover:scale-110">
-              <CreditCard size={100} strokeWidth={1} />
             </div>
         </motion.div>
 
@@ -387,7 +384,7 @@ export default function HomePage() {
                       <span className="text-[10px] font-bold opacity-40 uppercase">{dayOfWeek}</span>
                     </div>
                     {group.total > 0 && (
-                      <span className="text-[11px] font-black text-red-400/80">
+                      <span className="text-[11px] font-black text-[#E9720C]">
                         -{group.total.toLocaleString()}
                       </span>
                     )}

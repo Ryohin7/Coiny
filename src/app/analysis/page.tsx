@@ -78,8 +78,8 @@ const PieChart = ({ data }: { data: ChartData[] }) => {
 };
 
 const COLORS = [
-  "#000000", "#4B5563", "#9CA3AF", "#D1D5DB", "#1F2937", 
-  "#374151", "#6B7280", "#E5E7EB", "#111827", "#4B5563"
+  "#E8D5C4", "#B4CDE6", "#FFB7B7", "#C9F4AA", "#D0B8A8", 
+  "#A2CDCD", "#FAE3D9", "#BBDED6", "#EED7A1", "#CFD3CE"
 ];
 
 const DARK_COLORS = [
@@ -207,13 +207,13 @@ export default function AnalysisPage() {
             <div className="flex gap-2 mt-1">
               <button 
                 onClick={() => setViewType("month")}
-                className={cn("text-[10px] px-2 py-0.5 rounded-full transition-all", viewType === "month" ? "bg-black text-white dark:bg-white dark:text-black font-bold" : "text-muted-foreground")}
+                className={cn("text-[10px] px-2 py-0.5 rounded-full transition-all", viewType === "month" ? "bg-[#E9720C] text-white font-bold" : "text-muted-foreground")}
               >
                 月度
               </button>
               <button 
                 onClick={() => setViewType("year")}
-                className={cn("text-[10px] px-2 py-0.5 rounded-full transition-all", viewType === "year" ? "bg-black text-white dark:bg-white dark:text-black font-bold" : "text-muted-foreground")}
+                className={cn("text-[10px] px-2 py-0.5 rounded-full transition-all", viewType === "year" ? "bg-[#E9720C] text-white font-bold" : "text-muted-foreground")}
               >
                 年度
               </button>
@@ -239,8 +239,8 @@ export default function AnalysisPage() {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* Summary Cards */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-black text-white dark:bg-white dark:text-black p-4 rounded-[2rem] space-y-1 shadow-lg">
-              <div className="flex items-center gap-1.5 opacity-70">
+            <div className="bg-[#E9720C] text-white p-4 rounded-[2rem] space-y-1 shadow-lg">
+              <div className="flex items-center gap-1.5 opacity-80">
                 <TrendingDown size={14} />
                 <span className="text-[10px] font-bold uppercase tracking-wider">總支出</span>
               </div>
