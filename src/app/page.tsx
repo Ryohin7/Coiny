@@ -19,6 +19,7 @@ export default function HomePage() {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -185,14 +186,80 @@ export default function HomePage() {
             <p className="text-muted-foreground text-sm font-medium">👋 你好，{profile?.displayName || "用戶"}</p>
             <h1 className="text-3xl font-bold tracking-tight text-gradient">記帳明細</h1>
           </div>
+        </div>
+
+        {/* Date & Search Row */}
+        <div className="flex items-center gap-3">
           <button 
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className={cn("p-3 rounded-2xl transition-all shadow-sm", isSearchOpen ? "bg-black text-white dark:bg-white dark:text-black" : "bg-gray-100 dark:bg-gray-800 text-muted-foreground")}
+            onClick={() => {
+              setIsDatePickerOpen(!isDatePickerOpen);
+              if (!isDatePickerOpen) setIsSearchOpen(false);
+            }}
+            className="flex-1 flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-4 rounded-2xl transition-all active:scale-[0.98]"
           >
-            <Plus size={24} className={cn("transition-transform", isSearchOpen ? "rotate-45" : "rotate-0")} />
+            <span className="font-black text-sm">{currentYear}年 {String(currentMonth).padStart(2, "0")}月</span>
+            <ChevronLeft size={18} className={cn("transition-transform duration-300", isDatePickerOpen ? "-rotate-90" : "rotate-180")} />
+          </button>
+          
+          <button 
+            onClick={() => {
+              setIsSearchOpen(!isSearchOpen);
+              if (!isSearchOpen) setIsDatePickerOpen(false);
+            }}
+            className={cn(
+              "p-4 rounded-2xl transition-all shadow-sm active:scale-[0.98]", 
+              isSearchOpen ? "bg-black text-white dark:bg-white dark:text-black" : "bg-gray-100 dark:bg-gray-800 text-muted-foreground"
+            )}
+          >
+            {isSearchOpen ? <Plus size={20} className="rotate-45" /> : <ReceiptText size={20} />}
           </button>
         </div>
 
+        {/* Date Picker Expandable */}
+        <AnimatePresence>
+          {isDatePickerOpen && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-xl"
+            >
+              <div className="p-4 space-y-4">
+                <div className="flex items-center justify-between px-2">
+                  <button onClick={() => setCurrentYear(currentYear - 1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
+                    <ChevronLeft size={20} />
+                  </button>
+                  <span className="text-lg font-black tracking-tight">{currentYear}年度</span>
+                  <button onClick={() => setCurrentYear(currentYear + 1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
+                    <ChevronLeft size={20} className="rotate-180" />
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-2">
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => {
+                        setCurrentMonth(m);
+                        setIsDatePickerOpen(false);
+                      }}
+                      className={cn(
+                        "h-12 rounded-xl text-sm font-bold transition-all",
+                        currentMonth === m 
+                          ? "bg-black text-white dark:bg-white dark:text-black shadow-lg" 
+                          : "bg-gray-50 dark:bg-gray-800/50 text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
+                      )}
+                    >
+                      {m}月
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Search Input Expandable */}
         <AnimatePresence>
           {isSearchOpen && (
             <motion.div 
@@ -203,6 +270,7 @@ export default function HomePage() {
             >
               <div className="relative">
                 <input 
+                  autoFocus
                   type="text" 
                   placeholder="搜尋明細、備註或分類..." 
                   value={searchTerm}
@@ -221,37 +289,6 @@ export default function HomePage() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setCurrentYear(currentYear - 1)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                <ChevronLeft size={16} />
-              </button>
-              <span className="text-lg font-black">{currentYear}年</span>
-              <button onClick={() => setCurrentYear(currentYear + 1)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                <ChevronLeft size={16} className="rotate-180" />
-              </button>
-            </div>
-          </div>
-          
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
-            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-              <button
-                key={m}
-                onClick={() => setCurrentMonth(m)}
-                className={cn(
-                  "flex-shrink-0 w-12 h-10 rounded-xl text-sm font-bold transition-all",
-                  currentMonth === m 
-                    ? "bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105" 
-                    : "bg-gray-100 dark:bg-gray-800 text-muted-foreground hover:bg-gray-200 dark:hover:bg-gray-700"
-                )}
-              >
-                {m}月
-              </button>
-            ))}
-          </div>
-        </div>
       </header>
 
       {/* Summary Card */}
