@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import BottomNav from "@/components/layout/BottomNav";
+import AppWrapper from "@/components/layout/AppWrapper";
 import LiffProvider from "@/components/providers/LiffProvider";
 
 const geistSans = Geist({
@@ -26,12 +26,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-TW" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="bg-gray-50 dark:bg-[#050505] text-black dark:text-white min-h-screen flex flex-col items-center">
+      <body className="bg-[#F8F7F4] dark:bg-[#050505] text-black dark:text-white min-h-screen">
         <LiffProvider>
-          <main className="w-full max-w-md min-h-screen flex flex-col pb-20 relative">
+          <AppWrapper>
             {children}
-            <BottomNav />
-          </main>
+          </AppWrapper>
         </LiffProvider>
       </body>
     </html>

@@ -63,7 +63,7 @@ export default function SettingsPage() {
       {/* Forwarding Section */}
       <section className="space-y-4">
         <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground px-2">發票自動彙整</h3>
-        <div className="bg-[#E9720C] text-white p-6 rounded-[2.5rem] shadow-lg relative overflow-hidden group">
+        <div className="bg-primary text-white p-6 rounded-[2.5rem] shadow-lg relative overflow-hidden group">
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-2">
               <Mail size={18} />

@@ -26,10 +26,26 @@ export async function GET(req: Request) {
   }
 }
 
+import { z } from "zod";
+
+const categorySchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  name: z.string().min(1, "Name is required"),
+  icon: z.string().optional().default("💰"),
+  keywords: z.array(z.string()).optional().default([]),
+  isIncome: z.boolean().optional().default(false),
+});
+
 export async function POST(req: Request) {
   try {
-    const { userId, name, icon, keywords, isIncome } = await req.json();
-    if (!userId || !name) return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    const body = await req.json();
+    const result = categorySchema.safeParse(body);
+    
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
+    }
+
+    const { userId, name, icon, keywords, isIncome } = result.data;
 
     const db = getDb();
     if (!db) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
@@ -38,8 +54,8 @@ export async function POST(req: Request) {
       userId,
       name,
       icon,
-      keywords: keywords || [],
-      isIncome: isIncome ?? false,
+      keywords,
+      isIncome,
       createdAt: new Date(),
     });
 

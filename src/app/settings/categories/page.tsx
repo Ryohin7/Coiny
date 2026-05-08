@@ -176,13 +176,13 @@ export default function CategoryManagementPage() {
           <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-2xl">
             <button
               onClick={() => setActiveTab("expense")}
-              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "expense" ? "bg-white dark:bg-gray-800 shadow-sm text-[#E9720C]" : "text-muted-foreground"}`}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "expense" ? "bg-white dark:bg-gray-800 shadow-sm text-primary" : "text-muted-foreground"}`}
             >
               支出分類
             </button>
             <button
               onClick={() => setActiveTab("income")}
-              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "income" ? "bg-white dark:bg-gray-800 shadow-sm text-[#E9720C]" : "text-muted-foreground"}`}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "income" ? "bg-white dark:bg-gray-800 shadow-sm text-primary" : "text-muted-foreground"}`}
             >
               收入分類
             </button>
@@ -222,12 +222,16 @@ export default function CategoryManagementPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      {cat.keywords.map((kw, i) => (
+                      {((cat.keywords && cat.keywords.length > 0) ? cat.keywords : (
+                        [...DEFAULT_CATEGORIES, ...DEFAULT_INCOME_CATEGORIES].find(d => d.name === cat.name)?.keywords || []
+                      )).map((kw, i) => (
                         <span key={i} className="text-[10px] font-bold px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-full text-muted-foreground">
                           #{kw}
                         </span>
                       ))}
-                      {cat.keywords.length === 0 && (
+                      {((cat.keywords && cat.keywords.length > 0) ? cat.keywords : (
+                        [...DEFAULT_CATEGORIES, ...DEFAULT_INCOME_CATEGORIES].find(d => d.name === cat.name)?.keywords || []
+                      )).length === 0 && (
                         <span className="text-[10px] text-muted-foreground italic">無關鍵字，點擊編輯新增</span>
                       )}
                     </div>
@@ -238,17 +242,11 @@ export default function CategoryManagementPage() {
 
           <button
             onClick={() => setIsAdding(true)}
-            className="w-full py-6 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-[2.5rem] text-muted-foreground font-bold flex items-center justify-center gap-2 hover:border-[#E9720C] hover:text-[#E9720C] transition-all"
+            className="w-full py-6 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-[2.5rem] text-muted-foreground font-bold flex items-center justify-center gap-2 hover:border-primary hover:text-primary transition-all"
           >
             <Plus size={20} /> 新增分類
           </button>
 
-          <button
-            onClick={() => seedDefaultCategories(true)}
-            className="w-full py-4 text-xs text-muted-foreground font-bold flex items-center justify-center gap-2 hover:text-[#E9720C] transition-colors"
-          >
-            <Loader2 size={14} className="animate-spin-slow" /> 補齊/還原基礎分類
-          </button>
         </div>
       )}
 
@@ -285,7 +283,7 @@ export default function CategoryManagementPage() {
                       maxLength={2}
                       value={editingCat ? editingCat.icon : newCat.icon}
                       onChange={(e) => editingCat ? setEditingCat({ ...editingCat, icon: e.target.value }) : setNewCat({ ...newCat, icon: e.target.value })}
-                      className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 text-center outline-none focus:ring-2 ring-[#E9720C]"
+                      className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 text-center outline-none focus:ring-2 ring-primary"
                     />
                   </div>
                   <div className="col-span-3">
@@ -294,7 +292,7 @@ export default function CategoryManagementPage() {
                       type="text"
                       value={editingCat ? editingCat.name : newCat.name}
                       onChange={(e) => editingCat ? setEditingCat({ ...editingCat, name: e.target.value }) : setNewCat({ ...newCat, name: e.target.value })}
-                      className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 outline-none focus:ring-2 ring-[#E9720C] transition-all"
+                      className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 outline-none focus:ring-2 ring-primary transition-all"
                       placeholder="例如：主子開銷"
                     />
                   </div>
@@ -308,7 +306,7 @@ export default function CategoryManagementPage() {
                       if (editingCat) setEditingCat({ ...editingCat, keywords: val.split(",").map(k => k.trim()).filter(k => k) });
                       else setNewCat({ ...newCat, keywords: val });
                     }}
-                    className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 outline-none focus:ring-2 ring-[#E9720C] h-24 resize-none"
+                    className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 outline-none focus:ring-2 ring-primary h-24 resize-none"
                     placeholder="例如：罐頭, 飼料, 貓砂"
                   />
                 </div>
@@ -323,7 +321,7 @@ export default function CategoryManagementPage() {
                 </button>
                 <button
                   onClick={editingCat ? handleUpdateCategory : handleAddCategory}
-                  className="flex-1 py-4 bg-[#E9720C] text-white rounded-2xl font-bold"
+                  className="flex-1 py-4 bg-primary text-white rounded-2xl font-bold"
                 >
                   確認
                 </button>

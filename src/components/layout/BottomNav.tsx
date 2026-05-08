@@ -12,13 +12,15 @@ function cn(...inputs: ClassValue[]) {
 }
 
 const navItems = [
-  { href: "/", label: "首頁", icon: Home },
+  { href: "/trade", label: "記帳", icon: Home },
   { href: "/analysis", label: "分析", icon: PieChart },
   { href: "/settings", label: "設定", icon: Settings },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
+
+  if (pathname === "/") return null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 pb-safe-area">

@@ -63,7 +63,10 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
             setEmailID(data.emailID);
           }
         } else {
-          liff.login();
+          // 只在非首頁強制登入
+          if (window.location.pathname !== "/") {
+            liff.login();
+          }
         }
       } catch (err: any) {
         console.error("LIFF Init Error", err);
@@ -91,16 +94,28 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
     );
   }
 
-  if (!isLoggedIn) {
+  // 非首頁且未登入時，顯示跳轉畫面
+  if (!isLoggedIn && typeof window !== "undefined" && window.location.pathname !== "/") {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-black">
-        <div className="text-center space-y-6">
-          <div className="w-20 h-20 bg-white/10 rounded-full mx-auto animate-pulse" />
-          <p className="text-white font-medium">正在跳轉至 LINE 登入...</p>
+      <div className="min-h-screen flex items-center justify-center p-6 bg-[#F8F7F4] dark:bg-[#050505]">
+        <div className="text-center space-y-6 flex flex-col items-center">
+          <div className="relative w-24 h-24 flex items-center justify-center">
+            {/* 旋轉外圈 */}
+            <div className="absolute inset-0 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+            {/* 內部 Logo 閃爍 */}
+            <div className="w-16 h-16 bg-gradient-to-tr from-primary to-[#F4A261] rounded-[1.5rem] flex items-center justify-center shadow-lg shadow-primary/30 animate-pulse">
+              <span className="text-3xl drop-shadow-sm">🪙</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-black text-gray-800 dark:text-gray-100">準備進入 Coiny</h2>
+            <p className="text-sm text-muted-foreground font-medium animate-pulse">正在為您連接 LINE 帳號...</p>
+          </div>
         </div>
       </div>
     );
   }
+
 
   return (
     <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, emailID, error }}>
