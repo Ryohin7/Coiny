@@ -18,6 +18,7 @@ export default function HomePage() {
   const { data: recordsData, mutate: mutateRecords, isLoading: recordsLoading } = useSWR(userId ? `/api/expenses?userId=${userId}` : null, fetcher);
   const records = recordsData?.records || [];
 
+  const [loading, setLoading] = useState(false);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -77,12 +78,14 @@ export default function HomePage() {
       }
     } catch (error) {
       alert("匯入失敗");
+    } finally {
+      setLoading(false);
     }
   };
 
   const displayRecords = useMemo(() => {
     // 1. 先進行基礎的日期與搜尋過濾
-    const filtered = records.filter(rec => {
+    const filtered = records.filter((rec: any) => {
       const d = new Date(rec.date);
       const matchesDate = d.getFullYear() === currentYear && (d.getMonth() + 1) === currentMonth;
       const matchesSearch = !searchTerm || 
@@ -94,13 +97,13 @@ export default function HomePage() {
     });
 
     // 2. 準備所有紀錄以便匹配（包含非當月的）
-    const allInvoices = records.filter(r => r.type === "invoice");
+    const allInvoices = records.filter((r: any) => r.type === "invoice");
     const result: any[] = [];
     const processedInvoiceIds = new Set();
     const processedManualIds = new Set();
 
     // 3. 第一階段：處理手動紀錄並尋找匹配（正式匹配 + 自動模糊匹配）
-    filtered.forEach(rec => {
+    filtered.forEach((rec: any) => {
       const isManual = rec.type === "manual" || !rec.type;
       if (!isManual || processedManualIds.has(rec.id)) return;
 
@@ -108,12 +111,12 @@ export default function HomePage() {
 
       // A. 先找正式匹配
       if (rec.matched && rec.matchedInvoiceId) {
-        matchedInv = allInvoices.find(inv => inv.id === rec.matchedInvoiceId);
+        matchedInv = allInvoices.find((inv: any) => inv.id === rec.matchedInvoiceId);
       }
 
       // B. 如果沒正式匹配，嘗試自動模糊匹配（日期 + 金額）
       if (!matchedInv) {
-        matchedInv = allInvoices.find(inv => 
+        matchedInv = allInvoices.find((inv: any) => 
           !processedInvoiceIds.has(inv.id) && 
           inv.date === rec.date && 
           inv.totalAmount === rec.amount &&
@@ -138,10 +141,10 @@ export default function HomePage() {
     });
 
     // 4. 第二階段：處理剩餘的發票（未被手動紀錄匹配的）
-    filtered.forEach(rec => {
+    filtered.forEach((rec: any) => {
       if (rec.type === "invoice" && !processedInvoiceIds.has(rec.id)) {
         // 檢查這張發票是否其實有對應的手動紀錄（可能在其他月份或尚未處理）
-        const hasManualMatch = records.some(r => 
+        const hasManualMatch = records.some((r: any) => 
           (r.type === "manual" || !r.type) && 
           (r.matchedInvoiceId === rec.id || (r.date === rec.date && r.amount === rec.totalAmount))
         );
@@ -153,18 +156,18 @@ export default function HomePage() {
       }
     });
 
-    return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return result.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [records, currentYear, currentMonth, searchTerm]);
 
   const filteredRecords = displayRecords;
 
-  const totalExpense = displayRecords.reduce((sum, rec) => {
+  const totalExpense = displayRecords.reduce((sum: number, rec: any) => {
     if (rec.isIncome) return sum;
     const amount = rec.type === "invoice" ? rec.totalAmount : (rec.isMatched ? rec.invoiceAmount : rec.amount);
     return sum + (amount || 0);
   }, 0);
 
-  const totalIncome = filteredRecords.reduce((sum, rec) => {
+  const totalIncome = filteredRecords.reduce((sum: number, rec: any) => {
     if (!rec.isIncome) return sum;
     return sum + (rec.amount || 0);
   }, 0);
@@ -429,7 +432,7 @@ export default function HomePage() {
             </div>
           ) : (
             Object.entries(
-              filteredRecords.reduce((groups: any, record) => {
+              filteredRecords.reduce((groups: any, record: any) => {
                 const date = record.date; // YYYY/MM/DD
                 if (!groups[date]) groups[date] = { records: [], total: 0 };
                 groups[date].records.push(record);
@@ -442,7 +445,7 @@ export default function HomePage() {
                 
                 return groups;
               }, {})
-            ).sort((a, b) => b[0].localeCompare(a[0])).map(([dateStr, group]: [string, any]) => {
+            ).sort((a: any, b: any) => b[0].localeCompare(a[0])).map(([dateStr, group]: [string, any]) => {
               const dateObj = new Date(dateStr);
               const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
               const dd = String(dateObj.getDate()).padStart(2, "0");
