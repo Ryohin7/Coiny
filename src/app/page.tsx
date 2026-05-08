@@ -104,57 +104,60 @@ export default function HomePage() {
       return matchesDate && matchesSearch;
     });
 
-    // 2. 建立索引以便快速查詢
-    const invoiceMap = new Map(records.filter(r => r.type === "invoice").map(r => [r.id, r]));
-    const manualMap = new Map(records.filter(r => r.type === "manual" || !r.type).map(r => [r.id, r]));
-    
+    // 2. 準備所有紀錄以便匹配（包含非當月的）
+    const allInvoices = records.filter(r => r.type === "invoice");
     const result: any[] = [];
     const processedInvoiceIds = new Set();
     const processedManualIds = new Set();
 
-    // 3. 第一階段：處理手動紀錄（含已對帳的）
+    // 3. 第一階段：處理手動紀錄並尋找匹配（正式匹配 + 自動模糊匹配）
     filtered.forEach(rec => {
       const isManual = rec.type === "manual" || !rec.type;
-      if (isManual && !processedManualIds.has(rec.id)) {
-        if (rec.matched && rec.matchedInvoiceId) {
-          const inv = invoiceMap.get(rec.matchedInvoiceId);
-          if (inv) {
-            result.push({
-              ...rec,
-              invoiceItems: inv.items,
-              invoiceStore: inv.store,
-              invoiceAmount: inv.totalAmount,
-              isMatched: true
-            });
-            processedInvoiceIds.add(inv.id);
-            processedManualIds.add(rec.id);
-          } else {
-            // 雖然標記對帳但找不到發票（可能發票被刪除或在其他月份），仍視為已對帳
-            result.push({ ...rec, isMatched: true });
-            processedManualIds.add(rec.id);
-          }
-        } else {
-          result.push(rec);
-          processedManualIds.add(rec.id);
-        }
+      if (!isManual || processedManualIds.has(rec.id)) return;
+
+      let matchedInv = null;
+
+      // A. 先找正式匹配
+      if (rec.matched && rec.matchedInvoiceId) {
+        matchedInv = allInvoices.find(inv => inv.id === rec.matchedInvoiceId);
+      }
+
+      // B. 如果沒正式匹配，嘗試自動模糊匹配（日期 + 金額）
+      if (!matchedInv) {
+        matchedInv = allInvoices.find(inv => 
+          !processedInvoiceIds.has(inv.id) && 
+          inv.date === rec.date && 
+          inv.totalAmount === rec.amount &&
+          !inv.isIncome && !rec.isIncome
+        );
+      }
+
+      if (matchedInv) {
+        result.push({
+          ...rec,
+          invoiceItems: matchedInv.items,
+          invoiceStore: matchedInv.store,
+          invoiceAmount: matchedInv.totalAmount,
+          isMatched: true
+        });
+        processedInvoiceIds.add(matchedInv.id);
+        processedManualIds.add(rec.id);
+      } else {
+        result.push(rec);
+        processedManualIds.add(rec.id);
       }
     });
 
     // 4. 第二階段：處理剩餘的發票（未被手動紀錄匹配的）
     filtered.forEach(rec => {
       if (rec.type === "invoice" && !processedInvoiceIds.has(rec.id)) {
-        // 檢查這張發票是否其實有對應的手動紀錄（但手動紀錄可能不在 filtered 裡）
-        if (rec.matched && rec.matchedManualId) {
-          const man = manualMap.get(rec.matchedManualId);
-          if (man) {
-            // 如果手動紀錄在 records 裡，我們會在那邊處理它，所以這裡跳過
-            return;
-          } else {
-            // 找不到手動紀錄，則顯示發票本身但標註已對帳
-            result.push({ ...rec, isMatched: true });
-            processedInvoiceIds.add(rec.id);
-          }
-        } else {
+        // 檢查這張發票是否其實有對應的手動紀錄（可能在其他月份或尚未處理）
+        const hasManualMatch = records.some(r => 
+          (r.type === "manual" || !r.type) && 
+          (r.matchedInvoiceId === rec.id || (r.date === rec.date && r.amount === rec.totalAmount))
+        );
+        
+        if (!hasManualMatch) {
           result.push(rec);
           processedInvoiceIds.add(rec.id);
         }
