@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, CreditCard, ShoppingBag, Utensils, ReceiptText, Loader2, Trash2, Edit3, Check, ChevronLeft } from "lucide-react";
+import { Plus, CreditCard, ShoppingBag, Utensils, ReceiptText, Loader2, Trash2, Edit3, Check, ChevronLeft, Search } from "lucide-react";
 import { useLiff } from "@/components/providers/LiffProvider";
 import { useEffect, useState } from "react";
 import { clsx, type ClassValue } from "clsx";
@@ -208,10 +208,10 @@ export default function HomePage() {
             }}
             className={cn(
               "p-4 rounded-2xl transition-all shadow-sm active:scale-[0.98]", 
-              isSearchOpen ? "bg-black text-white dark:bg-white dark:text-black" : "bg-gray-100 dark:bg-gray-800 text-muted-foreground"
+              isSearchOpen ? "bg-[#7fd582] text-white" : "bg-gray-100 dark:bg-gray-800 text-muted-foreground"
             )}
           >
-            {isSearchOpen ? <Plus size={20} className="rotate-45" /> : <ReceiptText size={20} />}
+            {isSearchOpen ? <Plus size={20} className="rotate-45" /> : <Search size={20} />}
           </button>
         </div>
 
@@ -246,7 +246,7 @@ export default function HomePage() {
                       className={cn(
                         "h-12 rounded-xl text-sm font-bold transition-all",
                         currentMonth === m 
-                          ? "bg-black text-white dark:bg-white dark:text-black shadow-lg" 
+                          ? "bg-[#7fd582] text-white shadow-lg" 
                           : "bg-gray-50 dark:bg-gray-800/50 text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
                       )}
                     >
@@ -275,7 +275,7 @@ export default function HomePage() {
                   placeholder="搜尋明細、備註或分類..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none"
+                  className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 focus:ring-[#7fd582] transition-all outline-none"
                 />
                 {searchTerm && (
                   <button 
@@ -296,7 +296,7 @@ export default function HomePage() {
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-black dark:bg-white text-white dark:text-black p-5 rounded-[2rem] shadow-2xl relative overflow-hidden group"
+            className="bg-[#7fd582] text-white p-5 rounded-[2rem] shadow-xl relative overflow-hidden group"
         >
             <div className="relative z-10">
               <div className="flex justify-between items-center">
@@ -310,7 +310,7 @@ export default function HomePage() {
                 </div>
               </div>
               
-              <div className="mt-4 pt-3 border-t border-white/10 dark:border-black/10 flex justify-between items-center">
+              <div className="mt-4 pt-3 border-t border-white/20 flex justify-between items-center">
                 <p className="opacity-70 text-[10px] font-bold uppercase tracking-widest">結餘</p>
                 <p className="text-sm font-black tracking-tight">{monthlyBalance.toLocaleString()}</p>
               </div>
@@ -328,18 +328,18 @@ export default function HomePage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsPendingModalOpen(true)}
-                className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-4 rounded-3xl flex items-center justify-between group transition-all"
+                className="w-full bg-[#f0fdf4] dark:bg-[#7fd582]/10 border border-[#7fd582]/20 p-4 rounded-3xl flex items-center justify-between group transition-all"
             >
                 <div className="flex items-center gap-3">
-                    <div className="bg-blue-500 p-2 rounded-xl text-white">
+                    <div className="bg-[#7fd582] p-2 rounded-xl text-white">
                         <CreditCard size={18} />
                     </div>
                     <div className="text-left">
-                        <p className="text-blue-600 dark:text-blue-400 font-bold text-sm">有新的載具資料匯入</p>
-                        <p className="text-blue-500/60 dark:text-blue-400/60 text-[10px]">點擊查看並確認匯入 ({pendingInvoices.length} 筆)</p>
+                        <p className="text-[#5db360] font-bold text-sm">有新的載具資料匯入</p>
+                        <p className="text-[#7fd582]/60 text-[10px]">點擊查看並確認匯入 ({pendingInvoices.length} 筆)</p>
                     </div>
                 </div>
-                <Plus size={20} className="rotate-180 text-blue-500" />
+                <Plus size={20} className="rotate-180 text-[#7fd582]" />
             </motion.button>
         )}
       </div>
@@ -381,19 +381,19 @@ export default function HomePage() {
               const dayOfWeek = ["日", "一", "二", "三", "四", "五", "六"][dateObj.getDay()];
               
               return (
-                <div key={dateStr} className="space-y-3">
-                  <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl border-l-4 border-black dark:border-white shadow-sm">
+                <div key={dateStr} className="bg-white dark:bg-gray-900/50 rounded-[2rem] p-4 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between px-2 pb-2 border-b border-gray-50 dark:border-gray-800">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-black">{mm}/{dd}</span>
-                      <span className="text-[10px] font-bold opacity-50 uppercase">{dayOfWeek}</span>
+                      <span className="text-sm font-black text-[#7fd582]">{mm}/{dd}</span>
+                      <span className="text-[10px] font-bold opacity-40 uppercase">{dayOfWeek}</span>
                     </div>
                     {group.total > 0 && (
-                      <span className="text-[11px] font-black text-red-500/80">
+                      <span className="text-[11px] font-black text-red-400/80">
                         -{group.total.toLocaleString()}
                       </span>
                     )}
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {group.records.map((record: any) => {
                       const isInvoice = record.type === "invoice";
                       const amount = isInvoice ? record.totalAmount : record.amount;
@@ -513,7 +513,7 @@ export default function HomePage() {
                   </button>
                   <button 
                     onClick={() => setSelectedRecord(null)}
-                    className="bg-black dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all"
+                    className="bg-[#7fd582] text-white py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all"
                   >
                     關閉
                   </button>
@@ -640,7 +640,7 @@ export default function HomePage() {
                 <button 
                   onClick={handleConfirmImport}
                   disabled={selectedPendingIds.length === 0}
-                  className="bg-blue-600 text-white py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-30"
+                  className="bg-[#7fd582] text-white py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-30"
                 >
                   匯入選取資料 ({selectedPendingIds.length})
                 </button>
