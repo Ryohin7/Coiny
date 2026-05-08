@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, CreditCard, ShoppingBag, Utensils, ReceiptText, Loader2, Trash2, Edit3, Check, ChevronLeft, Search } from "lucide-react";
 import { useLiff } from "@/components/providers/LiffProvider";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
