@@ -174,18 +174,18 @@ export default function CategoryManagementPage() {
         <div className="space-y-6">
           {/* Tabs */}
           <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-2xl">
-            <button
-              onClick={() => setActiveTab("expense")}
-              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "expense" ? "bg-white dark:bg-gray-800 shadow-sm text-[#7fd582]" : "text-muted-foreground"}`}
-            >
-              支出分類
-            </button>
-            <button
-              onClick={() => setActiveTab("income")}
-              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "income" ? "bg-white dark:bg-gray-800 shadow-sm text-[#7fd582]" : "text-muted-foreground"}`}
-            >
-              收入分類
-            </button>
+              <button
+                onClick={() => setActiveTab("expense")}
+                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "expense" ? "bg-white dark:bg-gray-800 shadow-sm text-[#E9720C]" : "text-muted-foreground"}`}
+              >
+                支出分類
+              </button>
+              <button
+                onClick={() => setActiveTab("income")}
+                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === "income" ? "bg-white dark:bg-gray-800 shadow-sm text-[#E9720C]" : "text-muted-foreground"}`}
+              >
+                收入分類
+              </button>
           </div>
 
           <div className="space-y-4">
@@ -238,14 +238,14 @@ export default function CategoryManagementPage() {
 
           <button
             onClick={() => setIsAdding(true)}
-            className="w-full py-6 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-[2.5rem] text-muted-foreground font-bold flex items-center justify-center gap-2 hover:border-[#7fd582] hover:text-[#7fd582] transition-all"
+            className="w-full py-6 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-[2.5rem] text-muted-foreground font-bold flex items-center justify-center gap-2 hover:border-[#E9720C] hover:text-[#E9720C] transition-all"
           >
             <Plus size={20} /> 新增分類
           </button>
 
           <button
             onClick={() => seedDefaultCategories(true)}
-            className="w-full py-4 text-xs text-muted-foreground font-bold flex items-center justify-center gap-2 hover:text-[#7fd582] transition-colors"
+            className="w-full py-4 text-xs text-muted-foreground font-bold flex items-center justify-center gap-2 hover:text-[#E9720C] transition-colors"
           >
             <Loader2 size={14} className="animate-spin-slow" /> 補齊/還原基礎分類
           </button>
@@ -271,7 +271,7 @@ export default function CategoryManagementPage() {
             >
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-black">{editingCat ? "編輯分類" : (activeTab === "income" ? "新增收入分類" : "新增支出分類")}</h3>
-                <div className={`text-3xl ${activeTab === "income" ? "bg-green-50 dark:bg-green-950/30" : "bg-gray-50 dark:bg-gray-800"} w-16 h-16 flex items-center justify-center rounded-2xl`}>
+                <div className={`text-3xl ${activeTab === "income" ? "bg-orange-50 dark:bg-orange-950/30" : "bg-gray-50 dark:bg-gray-800"} w-16 h-16 flex items-center justify-center rounded-2xl`}>
                   {editingCat ? editingCat.icon : newCat.icon}
                 </div>
               </div>
@@ -285,7 +285,7 @@ export default function CategoryManagementPage() {
                       maxLength={2}
                       value={editingCat ? editingCat.icon : newCat.icon}
                       onChange={(e) => editingCat ? setEditingCat({ ...editingCat, icon: e.target.value }) : setNewCat({ ...newCat, icon: e.target.value })}
-                      className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 text-center outline-none focus:ring-2 ring-[#7fd582]"
+                      className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 text-center outline-none focus:ring-2 ring-[#E9720C]"
                     />
                   </div>
                   <div className="col-span-3">
@@ -294,7 +294,7 @@ export default function CategoryManagementPage() {
                       type="text"
                       value={editingCat ? editingCat.name : newCat.name}
                       onChange={(e) => editingCat ? setEditingCat({ ...editingCat, name: e.target.value }) : setNewCat({ ...newCat, name: e.target.value })}
-                      className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 outline-none focus:ring-2 ring-[#7fd582] transition-all"
+                      className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 outline-none focus:ring-2 ring-[#E9720C] transition-all"
                       placeholder="例如：主子開銷"
                     />
                   </div>
@@ -308,7 +308,7 @@ export default function CategoryManagementPage() {
                       if (editingCat) setEditingCat({ ...editingCat, keywords: val.split(",").map(k => k.trim()).filter(k => k) });
                       else setNewCat({ ...newCat, keywords: val });
                     }}
-                    className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 outline-none focus:ring-2 ring-[#7fd582] h-24 resize-none"
+                    className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl mt-1 outline-none focus:ring-2 ring-[#E9720C] h-24 resize-none"
                     placeholder="例如：罐頭, 飼料, 貓砂"
                   />
                 </div>
@@ -323,7 +323,7 @@ export default function CategoryManagementPage() {
                 </button>
                 <button
                   onClick={editingCat ? handleUpdateCategory : handleAddCategory}
-                  className="flex-1 py-4 bg-[#7fd582] text-white rounded-2xl font-bold"
+                  className="flex-1 py-4 bg-[#E9720C] text-white rounded-2xl font-bold"
                 >
                   確認
                 </button>

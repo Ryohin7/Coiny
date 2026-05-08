@@ -39,7 +39,6 @@ export default function SettingsPage() {
   return (
     <div className="p-6 space-y-8 pb-24">
       <header className="pt-4">
-        <p className="text-muted-foreground text-sm">管理您的對帳帳號與偏好</p>
       </header>
 
       {/* User Profile */}
@@ -56,7 +55,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <h2 className="text-xl font-bold">{profile?.displayName || "載入中..."}</h2>
-            <p className="text-xs text-muted-foreground font-mono">{userId}</p>
+            <p className="text-xs text-orange-600 font-bold tracking-widest bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded-full inline-block mt-1">免費會員</p>
           </div>
         </div>
       </section>
@@ -64,7 +63,7 @@ export default function SettingsPage() {
       {/* Forwarding Section */}
       <section className="space-y-4">
         <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground px-2">發票自動彙整</h3>
-        <div className="bg-black dark:bg-white text-white dark:text-black p-6 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+        <div className="bg-[#E9720C] text-white p-6 rounded-[2.5rem] shadow-lg relative overflow-hidden group">
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-2">
               <Mail size={18} />

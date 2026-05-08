@@ -8,22 +8,22 @@
 }
 
 :root {
-  --background: #fdfdfd;
-  --foreground: #1a1a1a;
-  --primary: #7fd582;
-  --accent: #7fd582;
-  --muted: #f0fdf4;
-  --muted-foreground: #606a62;
+  --background: #F8F7F4;
+  --foreground: #2d2d2d;
+  --primary: #E9720C;
+  --accent: #E9720C;
+  --muted: #fef4ea;
+  --muted-foreground: #7a6a5e;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #050a06;
-    --foreground: #f0f7f1;
-    --primary: #7fd582;
-    --accent: #7fd582;
-    --muted: #0d1a0f;
-    --muted-foreground: #94a397;
+    --background: #12100e;
+    --foreground: #f8f7f4;
+    --primary: #E9720C;
+    --accent: #E9720C;
+    --muted: #241a12;
+    --muted-foreground: #a69285;
   }
 }
 
@@ -46,7 +46,7 @@ body {
   }
   
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#7fd582] to-[#5db360] dark:from-[#7fd582] dark:to-[#a8e6aa];
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#E9720C] to-[#ff9d47] dark:from-[#E9720C] dark:to-[#ffcc99];
   }
 }
 

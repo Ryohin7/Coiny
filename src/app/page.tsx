@@ -184,7 +184,6 @@ export default function HomePage() {
         <div className="flex justify-between items-end">
           <div>
             <p className="text-muted-foreground text-sm font-medium">👋 你好，{profile?.displayName || "用戶"}</p>
-            <h1 className="text-3xl font-bold tracking-tight text-gradient">記帳明細</h1>
           </div>
         </div>
 
@@ -208,7 +207,7 @@ export default function HomePage() {
             }}
             className={cn(
               "p-4 rounded-2xl transition-all shadow-sm active:scale-[0.98]", 
-              isSearchOpen ? "bg-[#7fd582] text-white" : "bg-gray-100 dark:bg-gray-800 text-muted-foreground"
+              isSearchOpen ? "bg-[#E9720C] text-white" : "bg-white/80 dark:bg-gray-800 text-muted-foreground"
             )}
           >
             {isSearchOpen ? <Plus size={20} className="rotate-45" /> : <Search size={20} />}
@@ -246,8 +245,8 @@ export default function HomePage() {
                       className={cn(
                         "h-12 rounded-xl text-sm font-bold transition-all",
                         currentMonth === m 
-                          ? "bg-[#7fd582] text-white shadow-lg" 
-                          : "bg-gray-50 dark:bg-gray-800/50 text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
+                          ? "bg-[#E9720C] text-white shadow-lg" 
+                          : "bg-white dark:bg-gray-800/50 text-muted-foreground hover:bg-orange-50 dark:hover:bg-gray-800"
                       )}
                     >
                       {m}月
@@ -275,7 +274,7 @@ export default function HomePage() {
                   placeholder="搜尋明細、備註或分類..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 focus:ring-[#7fd582] transition-all outline-none"
+                  className="w-full bg-white/80 dark:bg-gray-800 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 focus:ring-[#E9720C] transition-all outline-none"
                 />
                 {searchTerm && (
                   <button 
@@ -296,7 +295,7 @@ export default function HomePage() {
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#7fd582] text-white p-5 rounded-[2rem] shadow-xl relative overflow-hidden group"
+            className="bg-[#E9720C] text-white p-5 rounded-[2rem] shadow-lg relative overflow-hidden group"
         >
             <div className="relative z-10">
               <div className="flex justify-between items-center">
@@ -328,18 +327,18 @@ export default function HomePage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsPendingModalOpen(true)}
-                className="w-full bg-[#f0fdf4] dark:bg-[#7fd582]/10 border border-[#7fd582]/20 p-4 rounded-3xl flex items-center justify-between group transition-all"
+                className="w-full bg-orange-50 dark:bg-[#E9720C]/10 border border-orange-100 dark:border-orange-800 p-4 rounded-3xl flex items-center justify-between group transition-all"
             >
                 <div className="flex items-center gap-3">
-                    <div className="bg-[#7fd582] p-2 rounded-xl text-white">
+                    <div className="bg-[#E9720C] p-2 rounded-xl text-white">
                         <CreditCard size={18} />
                     </div>
                     <div className="text-left">
-                        <p className="text-[#5db360] font-bold text-sm">有新的載具資料匯入</p>
-                        <p className="text-[#7fd582]/60 text-[10px]">點擊查看並確認匯入 ({pendingInvoices.length} 筆)</p>
+                        <p className="text-[#E9720C] font-bold text-sm">有新的載具資料匯入</p>
+                        <p className="text-[#E9720C]/60 text-[10px]">點擊查看並確認匯入 ({pendingInvoices.length} 筆)</p>
                     </div>
                 </div>
-                <Plus size={20} className="rotate-180 text-[#7fd582]" />
+                <Plus size={20} className="rotate-180 text-[#E9720C]" />
             </motion.button>
         )}
       </div>
@@ -384,7 +383,7 @@ export default function HomePage() {
                 <div key={dateStr} className="bg-white dark:bg-gray-900/50 rounded-[2rem] p-4 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
                   <div className="flex items-center justify-between px-2 pb-2 border-b border-gray-50 dark:border-gray-800">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-black text-[#7fd582]">{mm}/{dd}</span>
+                      <span className="text-sm font-black text-[#E9720C]">{mm}/{dd}</span>
                       <span className="text-[10px] font-bold opacity-40 uppercase">{dayOfWeek}</span>
                     </div>
                     {group.total > 0 && (
@@ -513,7 +512,7 @@ export default function HomePage() {
                   </button>
                   <button 
                     onClick={() => setSelectedRecord(null)}
-                    className="bg-[#7fd582] text-white py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all"
+                    className="bg-[#E9720C] text-white py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all"
                   >
                     關閉
                   </button>
@@ -640,7 +639,7 @@ export default function HomePage() {
                 <button 
                   onClick={handleConfirmImport}
                   disabled={selectedPendingIds.length === 0}
-                  className="bg-[#7fd582] text-white py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-30"
+                  className="bg-[#E9720C] text-white py-4 rounded-2xl font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-30"
                 >
                   匯入選取資料 ({selectedPendingIds.length})
                 </button>
