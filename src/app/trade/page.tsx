@@ -64,14 +64,6 @@ export default function HomePage() {
         body: JSON.stringify({ userId, invoiceIds: selectedPendingIds }),
       });
       if (res.ok) {
-        const others = pendingInvoices.filter(p => !selectedPendingIds.includes(p.id));
-        if (others.length > 0) {
-          await fetch("/api/invoices/confirm", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, invoiceIds: others.map(p => p.id) }),
-          });
-        }
         setIsPendingModalOpen(false);
         fetchRecords();
         fetchPending();
