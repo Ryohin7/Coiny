@@ -2,19 +2,17 @@ import { getAuth } from "./firebase/admin";
 
 /**
  * Verifies a token. Supports both Firebase ID Tokens and LINE ID Tokens.
- * 
- * @param req The incoming request
- * @returns The decoded token (uid/sub) or null if invalid
  */
 export async function verifyAuth(req: Request) {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.error("Auth: No Bearer token found in headers");
     return null;
   }
 
   const token = authHeader.split("Bearer ")[1];
   
-  // 1. Try Firebase Admin Verification first (in case they integrated Firebase Auth)
+  // 1. Try Firebase Admin Verification
   try {
     const auth = getAuth();
     if (auth) {
@@ -22,15 +20,19 @@ export async function verifyAuth(req: Request) {
       return { uid: decodedToken.uid, sub: decodedToken.sub };
     }
   } catch (error) {
-    // If Firebase fails, it might be a LINE ID Token
-    console.log("Firebase verification failed, trying LINE verification...");
+    // Expected to fail if it's a LINE token
   }
 
   // 2. Try LINE ID Token Verification
   try {
-    const channelId = process.env.LINE_CHANNEL_ID || process.env.NEXT_PUBLIC_LIFF_ID?.split('-')[0]; 
-    // Usually LIFF ID format is channelId-suffix
+    // Extract Channel ID from LIFF ID (e.g., 2068000000-abcde -> 2068000000)
+    const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+    const channelId = process.env.LINE_CHANNEL_ID || liffId?.split('-')[0];
     
+    if (!channelId) {
+        console.error("Auth: Missing LINE_CHANNEL_ID or NEXT_PUBLIC_LIFF_ID");
+    }
+
     const params = new URLSearchParams();
     params.append('id_token', token);
     if (channelId) {
@@ -43,21 +45,27 @@ export async function verifyAuth(req: Request) {
       body: params.toString(),
     });
 
+    const result = await response.json();
+
     if (response.ok) {
-      const result = await response.json();
-      // LINE ID Token verification result contains 'sub' which is the userId
+      // LINE verification successful
       return { uid: result.sub, sub: result.sub, ...result };
     } else {
-        const errorData = await response.json();
-        console.error("LINE verification failed:", errorData);
+        console.error("Auth: LINE verification failed", result);
+        
+        // TEMPORARY BYPASS FOR DEBUGGING IF NEEDED (Only if token exists and seems like a JWT)
+        // If we can't verify via LINE API (e.g. env issues), but token is present
+        // In production this should be removed.
+        if (token.split('.').length === 3) {
+             console.warn("Auth: Token looks like JWT but verification failed. Check Channel ID.");
+        }
     }
   } catch (error) {
-    console.error("LINE verification error:", error);
+    console.error("Auth: LINE verification error", error);
   }
 
-  // 3. Development Fallback
+  // 3. Last Resort Fallback (ONLY for troubleshooting)
   if (process.env.NODE_ENV === "development") {
-    console.warn("Auth verification failed, using development fallback");
     return { uid: "mock-user", sub: "mock-user" };
   }
 
