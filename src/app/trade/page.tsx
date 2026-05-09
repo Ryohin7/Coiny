@@ -106,8 +106,12 @@ export default function HomePage() {
   };
 
   const displayRecords = useMemo(() => {
+    console.log(`[TradePage] Total records from API: ${records.length}`);
     const filtered = records.filter((rec: any) => {
-      const d = new Date(rec.date);
+      if (!rec.date) return false;
+      // Handle YYYY/MM/DD or other formats
+      const dateStr = rec.date.replace(/\//g, "-");
+      const d = new Date(dateStr);
       const matchesDate = d.getFullYear() === currentYear && (d.getMonth() + 1) === currentMonth;
       const matchesSearch = !searchTerm ||
         (rec.note || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -116,6 +120,7 @@ export default function HomePage() {
         (rec.store || "").toLowerCase().includes(searchTerm.toLowerCase());
       return matchesDate && matchesSearch;
     });
+    console.log(`[TradePage] Filtered records for ${currentYear}/${currentMonth}: ${filtered.length}`);
 
     const allInvoices = records.filter((r: any) => r.type === "invoice");
     const result: any[] = [];
