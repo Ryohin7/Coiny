@@ -58,6 +58,20 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
             return;
           }
 
+          // 檢查 Token 是否過期
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const now = Math.floor(Date.now() / 1000);
+            if (payload.exp && payload.exp < now) {
+              console.warn("LIFF: Token expired, logging out...");
+              liff.logout();
+              liff.login();
+              return;
+            }
+          } catch (e) {
+            console.error("LIFF: Failed to parse token for expiration check");
+          }
+
           setProfile(profile);
           setUserId(profile.userId);
           setIdToken(token);
