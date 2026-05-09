@@ -25,12 +25,11 @@ export async function GET(req: Request) {
 
     const now = admin.firestore.Timestamp.now();
 
+    // 先抓取所有 pending 的資料，避免需要複雜的複合索引
     const snapshot = await db
       .collection("pending_invoices")
       .where("userId", "==", userId)
       .where("status", "==", "pending")
-      .where("availableAt", "<=", now) // 只抓取「時間已到」的資料
-      .orderBy("availableAt", "asc")
       .get();
 
     const pendingInvoices = snapshot.docs
@@ -38,13 +37,22 @@ export async function GET(req: Request) {
         id: doc.id,
         ...doc.data(),
       }))
-      // 額外的資料完整性檢查
-      .filter((inv: any) => 
-        inv.invNum && 
-        inv.totalAmount !== undefined && 
-        inv.store && 
-        inv.date
-      );
+      // 在記憶體中過濾：1. 完整性檢查 2. 時間已到 (針對一般會員的限制)
+      .filter((inv: any) => {
+        const isComplete = inv.invNum && inv.totalAmount !== undefined && inv.store && inv.date;
+        const availableAt = inv.availableAt ? (inv.availableAt.toDate ? inv.availableAt.toDate() : new Date(inv.availableAt)) : null;
+        
+        // 如果沒有設定 availableAt，預設為可見 (相容舊資料)
+        const isAvailable = !availableAt || availableAt <= now.toDate();
+        
+        return isComplete && isAvailable;
+      })
+      // 排序：按建立時間
+      .sort((a: any, b: any) => {
+        const dateA = a.createdAt?.toDate?.() || 0;
+        const dateB = b.createdAt?.toDate?.() || 0;
+        return dateB - dateA;
+      });
 
     return NextResponse.json({ pendingInvoices });
   } catch (error: any) {
