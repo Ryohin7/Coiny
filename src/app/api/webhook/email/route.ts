@@ -40,16 +40,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Payload too large (Max 60KB)" }, { status: 413 });
     }
 
-    // 3. 頻率限制 (非 Admin 且非 Pro 限制每 12 小時一次)
-    if (!isAdmin && !isPro) {
-      const lastProcessedAt = userData.lastWebhookAt?.toDate?.() || 0;
-      const now = Date.now();
-      const twelveHours = 12 * 60 * 60 * 1000;
-      
-      if (now - lastProcessedAt < twelveHours) {
-        return NextResponse.json({ error: "Too many requests. Please wait 12 hours." }, { status: 429 });
-      }
-    }
 
     // 4. 計算匯入時間 (Pro 立即，一般隔日凌晨)
     let availableAt = new Date();
