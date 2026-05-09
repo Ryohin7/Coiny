@@ -43,7 +43,7 @@ export function TransactionItem({ record, onClick }: TransactionItemProps) {
             </span>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground truncate">
+        <p className="text-xs text-muted-foreground truncate opacity-80">
           {record.isMatched ? `${record.note} (${record.invoiceStore})` : (description || "尚無明細")}
         </p>
       </div>

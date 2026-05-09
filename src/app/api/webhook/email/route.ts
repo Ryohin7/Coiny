@@ -42,10 +42,21 @@ export async function POST(req: Request) {
 
 
     // 4. 計算匯入時間 (Pro 立即，一般隔日凌晨)
-    let availableAt = new Date();
+    // 使用台灣時間 (UTC+8)
+    const now = new Date();
+    const tzOffset = 8 * 60; // 台灣時間偏移 (分鐘)
+    const twNow = new Date(now.getTime() + tzOffset * 60 * 1000);
+    
+    let availableAt = new Date(now.getTime());
     if (!isPro && !isAdmin) {
-      availableAt.setDate(availableAt.getDate() + 1);
-      availableAt.setHours(0, 0, 0, 0); // 明日凌晨
+      // 設定為台灣時間的隔日凌晨 00:00
+      availableAt = new Date(now.getTime());
+      availableAt.setUTCHours(24 - 8, 0, 0, 0); // 24 - 8 = 16:00 UTC 是台灣的 00:00
+      
+      // 如果現在已經過了台灣時間 16:00 UTC (即台灣 00:00)，則再加一天
+      if (availableAt <= now) {
+        availableAt.setUTCDate(availableAt.getUTCDate() + 1);
+      }
     }
 
     const invoices = await parseMOFCSV(csvContent, lineUserId, availableAt);
