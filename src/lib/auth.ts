@@ -1,11 +1,10 @@
 import { getAuth } from "./firebase/admin";
 
 /**
- * Verifies a token. Currently supports Firebase ID Tokens.
- * If you are using LINE ID Tokens directly, you should use LINE's verification API.
+ * Verifies a token. Supports both Firebase ID Tokens and LINE ID Tokens.
  * 
  * @param req The incoming request
- * @returns The decoded token or null if invalid
+ * @returns The decoded token (uid/sub) or null if invalid
  */
 export async function verifyAuth(req: Request) {
   const authHeader = req.headers.get("Authorization");
@@ -15,39 +14,54 @@ export async function verifyAuth(req: Request) {
 
   const token = authHeader.split("Bearer ")[1];
   
-  // NOTE: If you are using liff.getIDToken(), this is a LINE ID Token.
-  // To verify it, you should either:
-  // 1. Use Firebase Auth Custom Tokens to sign in to Firebase and get a Firebase ID Token.
-  // 2. Or verify the LINE ID Token via LINE's API: https://api.line.me/oauth2/v2.1/verify
-  
+  // 1. Try Firebase Admin Verification first (in case they integrated Firebase Auth)
   try {
     const auth = getAuth();
-    if (!auth) {
-      // If Firebase Admin is not initialized or credentials missing, 
-      // we might be in a dev environment without full auth.
-      // For now, return a mock user in development if needed, or fail.
-      if (process.env.NODE_ENV === "development") {
-        console.warn("Auth verification skipped in development");
-        return { uid: req.headers.get("x-mock-user") || "mock-user", sub: "mock-user" };
-      }
-      return null;
+    if (auth) {
+      const decodedToken = await auth.verifyIdToken(token);
+      return { uid: decodedToken.uid, sub: decodedToken.sub };
     }
-    
-    // Attempt Firebase verification
-    const decodedToken = await auth.verifyIdToken(token);
-    return decodedToken;
   } catch (error) {
-    // If Firebase verification fails, it might be a LINE token or invalid.
-    // In a real production app, you'd handle LINE token verification here.
-    console.error("Auth verification failed:", error);
-    
-    // MOCK for demonstration: if in dev, allow
-    if (process.env.NODE_ENV === "development") {
-        return { uid: "mock-user", sub: "mock-user" };
-    }
-    
-    return null;
+    // If Firebase fails, it might be a LINE ID Token
+    console.log("Firebase verification failed, trying LINE verification...");
   }
+
+  // 2. Try LINE ID Token Verification
+  try {
+    const channelId = process.env.LINE_CHANNEL_ID || process.env.NEXT_PUBLIC_LIFF_ID?.split('-')[0]; 
+    // Usually LIFF ID format is channelId-suffix
+    
+    const params = new URLSearchParams();
+    params.append('id_token', token);
+    if (channelId) {
+        params.append('client_id', channelId);
+    }
+
+    const response = await fetch('https://api.line.me/oauth2/v2.1/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      // LINE ID Token verification result contains 'sub' which is the userId
+      return { uid: result.sub, sub: result.sub, ...result };
+    } else {
+        const errorData = await response.json();
+        console.error("LINE verification failed:", errorData);
+    }
+  } catch (error) {
+    console.error("LINE verification error:", error);
+  }
+
+  // 3. Development Fallback
+  if (process.env.NODE_ENV === "development") {
+    console.warn("Auth verification failed, using development fallback");
+    return { uid: "mock-user", sub: "mock-user" };
+  }
+
+  return null;
 }
 
 /**
