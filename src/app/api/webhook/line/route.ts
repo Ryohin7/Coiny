@@ -35,11 +35,17 @@ export async function POST(req: Request) {
     if (event.type === "message" && event.message.type === "text") {
       let text = event.message.text.trim();
       const userId = event.source?.userId;
-      if (!userId) continue;
+      const db = getDb();
+      if (!db) continue;
+
+      // 取得用戶狀態 (確認是否為 Pro)
+      const userDoc = await db.collection("users").doc(userId).get();
+      const userData = userDoc.data();
+      const userIsPro = userData?.isPro || userData?.isAdmin || false;
 
       let targetDate = new Date();
       
-      // 1. 智慧日期解析
+      // 1. 智慧日期解析 (Regex 預處理)
       const dateKeywords: Record<string, number> = {
         "大前天": -3,
         "前天": -2,
@@ -70,9 +76,9 @@ export async function POST(req: Request) {
 
       const dateStr = targetDate.toISOString().split("T")[0].replace(/-/g, "/");
 
-      // --- AI 測試區塊 (不影響原本功能) ---
+      // --- AI 測試區塊 (Pro 會員專屬) ---
       let aiResult = null;
-      if (process.env.AI_ENABLED === "true") {
+      if (process.env.AI_ENABLED === "true" && userIsPro) {
         const { parseWithAI } = await import("@/lib/services/ai-parser");
         aiResult = await parseWithAI(event.message.text);
       }

@@ -18,11 +18,11 @@ interface Invoice {
   icon?: string;
 }
 
-export async function parseMOFCSV(csvContent: string, userId: string) {
-  // Clean up content: handle common email forwarding artifacts like '>' or leading spaces
+export async function parseMOFCSV(csvContent: string, userId: string, availableAt: Date) {
+  // Clean up content
   const cleanedContent = csvContent
     .split(/\r?\n/)
-    .map(line => line.replace(/^[> \t*]+/, "").trim()) // Remove leading >, spaces, tabs, or *
+    .map(line => line.replace(/^[> \t*]+/, "").trim())
     .filter(line => line.startsWith("M|") || line.startsWith("D|"))
     .join('\n');
 
@@ -39,8 +39,7 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
     const type = row[0]?.toString().trim();
 
     if (type === "M") {
-      // M | 載具名稱 | 載具號碼 | 發票日期 | 商店統編 | 商店店名 | 發票號碼 | 總金額 | 發票狀態 |
-      const rawDate = row[3]?.toString().trim() || ""; // 20260301
+      const rawDate = row[3]?.toString().trim() || "";
       if (rawDate.length < 8) continue;
       
       const date = `${rawDate.substring(0, 4)}/${rawDate.substring(4, 6)}/${rawDate.substring(6, 8)}`;
@@ -59,23 +58,20 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
       };
       invoices.push(currentInvoice);
     } else if (type === "D" && currentInvoice) {
-      // D | 發票號碼 | 小計 | 品項名稱 |
       const name = row[3]?.toString().trim() || "未知品項";
       const price = parseInt(row[2]?.toString().trim()) || 0;
-
       currentInvoice.items.push({ name, price });
     }
   }
 
   // Save to Firestore and Match
   for (const invoice of invoices) {
-    // 延遲分類：現在有了完整品項，可以進行精準分類
     const itemNames = invoice.items.map(i => i.name);
     const { category, icon } = await classifyMerchant(invoice.store, itemNames, invoice.taxId, userId);
     invoice.category = category;
     invoice.icon = icon;
 
-    await saveAndMatchInvoice(invoice, userId);
+    await saveAndMatchInvoice(invoice, userId, availableAt);
   }
 
   return invoices;
@@ -83,34 +79,28 @@ export async function parseMOFCSV(csvContent: string, userId: string) {
 
 import { classifyMerchant } from "./classifier";
 
-async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
+async function saveAndMatchInvoice(invoice: Invoice, userId: string, availableAt: Date) {
   const db = getDb();
   if (!db) return;
 
-  // 1. Duplicate Check: Skip if this invoice number already exists
+  // 1. Duplicate Check
   const existingInvoice = await db.collection("invoices")
     .where("userId", "==", userId)
     .where("invNum", "==", invoice.invNum)
     .limit(1)
     .get();
   
-  if (!existingInvoice.empty) {
-    console.log(`Invoice ${invoice.invNum} already exists, skipping.`);
-    return;
-  }
+  if (!existingInvoice.empty) return;
 
-  // Also check pending
   const existingPending = await db.collection("pending_invoices")
     .where("userId", "==", userId)
     .where("invNum", "==", invoice.invNum)
     .limit(1)
     .get();
   
-  if (!existingPending.empty) {
-    return;
-  }
+  if (!existingPending.empty) return;
   
-  // 2. Fuzzy Match Logic (+/- 1 day)
+  // 2. Fuzzy Match Logic
   const targetDate = new Date(invoice.date);
   const prevDate = new Date(targetDate);
   prevDate.setDate(targetDate.getDate() - 1);
@@ -123,8 +113,6 @@ async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
     nextDate.toISOString().split("T")[0].replace(/-/g, "/"),
   ];
 
-  // Search for potential manual entries across these dates
-  // We prioritize exact date matches
   const manualQuery = await db
     .collection("manual_expenses")
     .where("userId", "==", userId)
@@ -135,7 +123,6 @@ async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
 
   let matchedManualInfo = null;
   if (!manualQuery.empty) {
-    // Priority: 1. Exact date match, 2. Closest date
     const sortedDocs = manualQuery.docs.sort((a, b) => {
       const distA = Math.abs(new Date(a.data().date).getTime() - targetDate.getTime());
       const distB = Math.abs(new Date(b.data().date).getTime() - targetDate.getTime());
@@ -158,6 +145,7 @@ async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
     userId,
     matchedManualInfo,
     status: "pending",
+    availableAt: admin.firestore.Timestamp.fromDate(availableAt),
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 }

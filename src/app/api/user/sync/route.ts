@@ -26,6 +26,8 @@ export async function POST(req: Request) {
     const userDoc = await userRef.get();
 
     let emailID = "";
+    let isPro = false;
+    let isAdmin = false;
 
     if (!userDoc.exists) {
       // Generate unique 10-char emailID
@@ -37,13 +39,16 @@ export async function POST(req: Request) {
         displayName,
         pictureUrl,
         emailID,
-        membershipLevel: "Free", // Default level
+        isPro: false,
+        isAdmin: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         lastLogin: admin.firestore.FieldValue.serverTimestamp(),
       });
     } else {
       const userData = userDoc.data();
       emailID = userData?.emailID || Math.random().toString(36).substring(2, 12).toUpperCase();
+      isPro = userData?.isPro || false;
+      isAdmin = userData?.isAdmin || false;
 
       // Update existing user
       await userRef.update({
@@ -54,7 +59,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, emailID });
+    return NextResponse.json({ success: true, emailID, isPro, isAdmin });
   } catch (error: any) {
     console.error("User sync error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

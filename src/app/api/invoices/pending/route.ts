@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/firebase/admin";
 import { verifyAuth } from "@/lib/auth";
+import * as admin from "firebase-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -22,17 +23,28 @@ export async function GET(req: Request) {
     const db = getDb();
     if (!db) throw new Error("DB not initialized");
 
+    const now = admin.firestore.Timestamp.now();
+
     const snapshot = await db
       .collection("pending_invoices")
       .where("userId", "==", userId)
       .where("status", "==", "pending")
-      .orderBy("createdAt", "desc")
+      .where("availableAt", "<=", now) // 只抓取「時間已到」的資料
+      .orderBy("availableAt", "asc")
       .get();
 
-    const pendingInvoices = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const pendingInvoices = snapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      // 額外的資料完整性檢查
+      .filter((inv: any) => 
+        inv.invNum && 
+        inv.totalAmount !== undefined && 
+        inv.store && 
+        inv.date
+      );
 
     return NextResponse.json({ pendingInvoices });
   } catch (error: any) {

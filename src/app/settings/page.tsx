@@ -7,7 +7,7 @@ import { User, Mail, Shield, Bell, ChevronRight, Copy, ExternalLink, RefreshCcw,
 import { useLiff } from "@/components/providers/LiffProvider";
 
 export default function SettingsPage() {
-  const { profile, userId, emailID, idToken } = useLiff();
+  const { profile, userId, emailID, idToken, isPro, isAdmin } = useLiff();
   const forwardEmail = emailID ? `${emailID}@coinyapp.com` : "載入中...";
 
   const copyToClipboard = () => {
@@ -39,6 +39,9 @@ export default function SettingsPage() {
     }
   };
 
+  const membershipLabel = isAdmin ? "管理員" : (isPro ? "Pro 會員" : "免費會員");
+  const membershipColor = isAdmin ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" : (isPro ? "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400" : "bg-orange-100 text-orange-600 dark:bg-orange-900/30");
+
   return (
     <div className="p-6 space-y-8 pb-24">
       <header className="pt-4">
@@ -58,7 +61,9 @@ export default function SettingsPage() {
           </div>
           <div>
             <h2 className="text-xl font-bold">{profile?.displayName || "載入中..."}</h2>
-            <p className="text-xs text-orange-600 font-bold tracking-widest bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded-full inline-block mt-1">免費會員</p>
+            <p className={`text-[10px] font-black tracking-widest ${membershipColor} px-3 py-1 rounded-full inline-block mt-1 uppercase`}>
+              {membershipLabel}
+            </p>
           </div>
         </div>
       </section>

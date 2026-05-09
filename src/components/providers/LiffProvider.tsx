@@ -9,6 +9,8 @@ interface LiffContextType {
   userId: string | null;
   profile: any | null;
   emailID: string | null;
+  isAdmin: boolean;
+  isPro: boolean;
   idToken: string | null;
   error: string | null;
 }
@@ -19,6 +21,8 @@ const LiffContext = createContext<LiffContextType>({
   userId: null,
   profile: null,
   emailID: null,
+  isAdmin: false,
+  isPro: false,
   idToken: null,
   error: null,
 });
@@ -31,6 +35,8 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [emailID, setEmailID] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isPro, setIsPro] = useState(false);
   const [idToken, setIdToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,6 +107,8 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
           const data = await res.json();
           if (data.emailID) {
             setEmailID(data.emailID);
+            setIsPro(data.isPro || false);
+            setIsAdmin(data.isAdmin || false);
           }
         } else {
           // 只在非首頁強制登入
@@ -150,7 +158,7 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
   // 防止 Hydration Mismatch：初次渲染（Server-side）不應包含 window 邏輯
   if (!mounted) {
     return (
-      <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, emailID, idToken, error }}>
+      <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, emailID, isAdmin, isPro, idToken, error }}>
         <div style={{ opacity: 0 }}>{children}</div>
       </LiffContext.Provider>
     );
@@ -180,7 +188,7 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
 
 
   return (
-    <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, emailID, idToken, error }}>
+    <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, emailID, isAdmin, isPro, idToken, error }}>
       {children}
     </LiffContext.Provider>
   );
