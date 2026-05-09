@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     if (!db) throw new Error("DB not initialized");
 
     const results = { confirmed: 0, skipped: 0 };
+    const batch = db.batch();
 
     for (const id of invoiceIds) {
       const docRef = db.collection("pending_invoices").doc(id);
@@ -36,8 +37,6 @@ export async function POST(req: Request) {
         results.skipped++;
         continue;
       }
-
-      const batch = db.batch();
 
       // 1. Create the real invoice record
       const invoiceRef = db.collection("invoices").doc();
