@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import * as admin from "firebase-admin";
 import { getDb } from "@/lib/firebase/admin";
 import crypto from "crypto";
-import { classifyMerchant } from "@/lib/services/classifier";
 
 export const dynamic = "force-dynamic";
 
@@ -34,131 +33,120 @@ export async function POST(req: Request) {
 
   for (const event of events) {
     if (event.type === "message" && event.message.type === "text") {
-      const text = event.message.text.trim();
+      let text = event.message.text.trim();
       const userId = event.source?.userId;
-
       if (!userId) continue;
 
-      // Improved Parser: Supports [Date] Category Amount [Remark] OR [Date] Amount Category [Remark]
-      const tokens = text.split(/\s+/);
-      let datePart: string | undefined;
-      let categoryInput: string | undefined;
-      let amount: number | undefined;
-      let remark: string | undefined;
-
-      // 1. Check if first token is Date (M/D)
-      let startIndex = 0;
-      if (tokens[0].match(/^\d{1,2}\/\d{1,2}$/)) {
-        datePart = tokens[0];
-        startIndex = 1;
-      }
-
-      // 2. Identify Amount and Category from remaining tokens
-      const remainingTokens = tokens.slice(startIndex);
+      let targetDate = new Date();
       
-      // Try to find the first token that is a number (Amount)
-      const amountIndex = remainingTokens.findIndex(t => /^\d+$/.test(t));
-      
-      if (amountIndex !== -1) {
-        amount = parseInt(remainingTokens[amountIndex]);
-        // Category is usually the other token
-        if (amountIndex === 0 && remainingTokens.length > 1) {
-          categoryInput = remainingTokens[1];
-          remark = remainingTokens.slice(2).join(" ");
-        } else if (amountIndex > 0) {
-          categoryInput = remainingTokens[0];
-          remark = remainingTokens.slice(1, amountIndex).concat(remainingTokens.slice(amountIndex + 1)).join(" ");
+      // 1. 智慧日期解析
+      const dateKeywords: Record<string, number> = {
+        "大前天": -3,
+        "前天": -2,
+        "昨天": -1,
+        "今天": 0,
+        "明天": 1,
+        "後天": 2,
+        "大後天": 3
+      };
+
+      for (const [kw, offset] of Object.entries(dateKeywords)) {
+        if (text.includes(kw)) {
+          targetDate.setDate(targetDate.getDate() + offset);
+          text = text.replace(kw, "").trim();
+          break;
         }
       }
 
-      if (categoryInput && amount !== undefined) {
+      // 支援 MM/DD 格式
+      const dateMatch = text.match(/(\d{1,2})\/(\d{1,2})/);
+      if (dateMatch) {
+        const month = parseInt(dateMatch[1]) - 1;
+        const day = parseInt(dateMatch[2]);
+        targetDate.setMonth(month);
+        targetDate.setDate(day);
+        text = text.replace(dateMatch[0], "").trim();
+      }
 
-        let dateStr: string;
-        const now = new Date();
-        const currentYear = now.getFullYear();
+      const dateStr = targetDate.toISOString().split("T")[0].replace(/-/g, "/");
 
-        if (datePart) {
-          const [m, d] = datePart.split("/").map(Number);
-          // Set to current year, specific month/day
-          const targetDate = new Date(currentYear, m - 1, d);
-          dateStr = targetDate.toISOString().split("T")[0].replace(/-/g, "/");
-        } else {
-          dateStr = now.toISOString().split("T")[0].replace(/-/g, "/");
+      // --- AI 測試區塊 (不影響原本功能) ---
+      let aiResult = null;
+      if (process.env.AI_ENABLED === "true") {
+        const { parseWithAI } = await import("@/lib/services/ai-parser");
+        aiResult = await parseWithAI(event.message.text);
+      }
+      // --------------------------------
+
+      // 2. 金額與內容解析
+      let amount: number;
+      let categoryInput: string;
+      let finalDateStr = dateStr;
+      let isIncomeFallback = false;
+
+      if (aiResult) {
+        // 使用 AI 解析結果
+        amount = aiResult.amount;
+        categoryInput = aiResult.note || aiResult.category;
+        finalDateStr = aiResult.date || dateStr;
+        isIncomeFallback = aiResult.isIncome;
+      } else {
+        // 回退至原本的正規表達式解析
+        const amountMatch = text.match(/(\d+)/);
+        if (!amountMatch) continue; 
+        amount = parseInt(amountMatch[0]);
+        categoryInput = text.replace(amountMatch[0], "").trim() || "其他";
+      }
+
+      try {
+        const db = getDb();
+        if (!db) continue;
+
+        // 3. 取得用戶自訂分類進行匹配
+        const catSnapshot = await db.collection("categories").where("userId", "==", userId).get();
+        const userCats = catSnapshot.docs.map(doc => doc.data());
+        
+        // 優先比對名稱，再比對關鍵字
+        const matchedCat = userCats.find(c => c.name === categoryInput) || 
+                           userCats.find(c => c.keywords && c.keywords.some((k: string) => categoryInput.toUpperCase().includes(k.toUpperCase())));
+
+        const finalCategory = matchedCat ? matchedCat.name : "其他";
+        const icon = matchedCat ? (matchedCat.icon || "💰") : "💰";
+        const finalRemark = categoryInput;
+
+        // 判斷是否為收入
+        const incomeKeywords = ["收入", "薪資", "獎金", "利息", "中獎", "投資"];
+        const isIncome = aiResult ? isIncomeFallback : (matchedCat?.isIncome || incomeKeywords.some(kw => categoryInput.includes(kw)));
+
+        const expenseData: any = {
+          userId,
+          amount,
+          date: finalDateStr,
+          note: finalRemark,
+          category: finalCategory,
+          icon: icon,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          matched: false,
+          originalText: event.message.text,
+          isIncome,
+          items: [{ name: finalRemark, price: amount }]
+        };
+
+        await db.collection("manual_expenses").add(expenseData);
+
+        if ("replyToken" in event && event.replyToken) {
+          await client.replyMessage({
+            replyToken: event.replyToken,
+            messages: [
+              {
+                type: "text",
+                text: `✅ 已記錄${isIncome ? "收入" : "支出"}：${amount} 元\n📅 日期：${finalDateStr}\n🏷️ 項目：${categoryInput}\n📁 分類：${finalCategory}${aiResult ? "\n🤖 (由 AI 解析)" : ""}`,
+              },
+            ],
+          });
         }
-
-        try {
-          const db = getDb();
-          if (!db) {
-            console.error("Database not initialized");
-            continue;
-          }
-
-          // 1. 取得用戶自訂分類
-          const catSnapshot = await db.collection("categories").where("userId", "==", userId).get();
-          const userCats = catSnapshot.docs.map(doc => doc.data());
-          
-          // 2. 尋找匹配的分類 (名稱或關鍵字)
-          // 優先比對名稱，再比對關鍵字
-          const matchedCat = userCats.find(c => c.name === categoryInput) || 
-                             userCats.find(c => c.keywords && c.keywords.some((k: string) => k.toUpperCase() === categoryInput.toUpperCase()));
-
-          if (!matchedCat) {
-            if ("replyToken" in event && event.replyToken) {
-              await client.replyMessage({
-                replyToken: event.replyToken,
-                messages: [{ type: "text", text: `❌ 沒有「${categoryInput}」這個分類，請先至分類管理設定。` }],
-              });
-            }
-            continue;
-          }
-
-          const finalCategory = matchedCat.name;
-          const icon = matchedCat.icon || "💰";
-          let finalRemark = remark;
-
-          // 如果輸入的是關鍵字而不是分類名稱，自動將關鍵字轉入備註
-          if (finalCategory !== categoryInput) {
-            finalRemark = remark ? `${categoryInput} (${remark})` : categoryInput;
-          }
-
-          // Determine if it's income (heuristic)
-          const incomeKeywords = ["收入", "薪資", "獎金", "利息", "中獎", "投資"];
-          const isIncome = incomeKeywords.some(kw => finalCategory.includes(kw) || categoryInput.includes(kw));
-
-          const expenseData: any = {
-            userId,
-            amount,
-            date: dateStr,
-            note: finalRemark || "手動記帳",
-            category: finalCategory,
-            icon: icon,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            matched: false,
-            originalText: text,
-            isIncome,
-          };
-
-          // Update items for details view
-          if (finalRemark) {
-            expenseData.items = [{ name: finalRemark, price: amount }];
-          }
-
-          await db.collection("manual_expenses").add(expenseData);
-
-          if ("replyToken" in event && event.replyToken) {
-            await client.replyMessage({
-              replyToken: event.replyToken,
-              messages: [
-                {
-                  type: "text",
-                  text: `✅ 已記錄${isIncome ? "收入" : "支出"}：${amount} 元 (${dateStr})\n分類：${finalCategory}${finalCategory !== categoryInput ? ` (${categoryInput})` : ""}\n${finalRemark ? `備註：${finalRemark}` : ""}`,
-                },
-              ],
-            });
-          }
-        } catch (error) {
-          console.error("Error saving expense:", error);
-        }
+      } catch (error) {
+        console.error("Error saving expense:", error);
       }
     }
   }
