@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { parseMOFCSV } from "@/lib/services/mof-parser";
 import { getDb } from "@/lib/firebase/admin";
 import * as admin from "firebase-admin";
+import { messagingApi } from "@line/bot-sdk";
+
+const client = new messagingApi.MessagingApiClient({
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || "",
+});
 
 export const dynamic = "force-dynamic";
 
@@ -55,10 +60,27 @@ export async function POST(req: Request) {
 
     const invoices = await parseMOFCSV(csvContent, lineUserId, availableAt);
 
-    // 更新最後處理時間
+    // 5. 更新最後處理時間
     await userDoc.ref.update({
       lastWebhookAt: admin.firestore.FieldValue.serverTimestamp()
     });
+
+    // 6. 發送 LINE 推送通知
+    try {
+      if (invoices.length > 0) {
+        const message = isAdmin || isPro
+          ? `✅ 載具發票匯入成功！\n偵測到 ${invoices.length} 筆新資料，已立即開放對帳。請至「交易」頁面查看。`
+          : `✅ 載具發票已接收！\n共 ${invoices.length} 筆資料。由於您目前為一般會員，系統將於明日凌晨 (00:00) 開放對帳通知。`;
+
+        await client.pushMessage({
+          to: lineUserId,
+          messages: [{ type: "text", text: message }],
+        });
+      }
+    } catch (pushError) {
+      console.error("LINE Push Notification Error:", pushError);
+      // 不影響主流程，僅記錄錯誤
+    }
 
     return NextResponse.json({
       success: true,

@@ -25,7 +25,13 @@ export async function GET(req: Request) {
 
     const now = admin.firestore.Timestamp.now();
 
-    // 先抓取所有 pending 的資料，避免需要複雜的複合索引
+    // 1. 取得使用者權限狀態
+    const userDoc = await db.collection("users").doc(userId).get();
+    const userData = userDoc.data();
+    const isPro = userData?.isPro === true;
+    const isAdmin = userData?.isAdmin === true;
+
+    // 2. 抓取所有 pending 的資料
     const snapshot = await db
       .collection("pending_invoices")
       .where("userId", "==", userId)
@@ -39,11 +45,12 @@ export async function GET(req: Request) {
       }))
       // 在記憶體中過濾：1. 完整性檢查 2. 時間已到 (針對一般會員的限制)
       .filter((inv: any) => {
-        const isComplete = inv.invNum && inv.totalAmount !== undefined && inv.store && inv.date;
+        // 放寬完整性檢查：只要有商店、日期跟金額即可
+        const isComplete = inv.totalAmount !== undefined && inv.store && inv.date;
         const availableAt = inv.availableAt ? (inv.availableAt.toDate ? inv.availableAt.toDate() : new Date(inv.availableAt)) : null;
         
-        // 如果沒有設定 availableAt，預設為可見 (相容舊資料)
-        const isAvailable = !availableAt || availableAt <= now.toDate();
+        // 如果是 Admin 或 Pro，或是已經到達可用時間，則顯示
+        const isAvailable = isAdmin || isPro || !availableAt || availableAt <= now.toDate();
         
         return isComplete && isAvailable;
       })
