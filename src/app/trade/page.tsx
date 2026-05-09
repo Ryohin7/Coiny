@@ -32,7 +32,11 @@ export default function HomePage() {
 
   const { data: recordsData, mutate: mutateRecords, isLoading: recordsLoading } = useSWR(
     (userId && idToken) ? `/api/expenses?userId=${userId}` : null, 
-    fetcher
+    fetcher,
+    { 
+      revalidateOnFocus: true,
+      revalidateOnMount: true 
+    }
   );
   
   const records = recordsData?.records || [];

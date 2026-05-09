@@ -50,30 +50,35 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
 
         if (liff.isLoggedIn()) {
           const profile = await liff.getProfile();
+          const token = liff.getIDToken();
+          
+          if (!token) {
+            console.error("LIFF: Logged in but ID Token is null. Check openid scope.");
+            setError("已登入但無法取得身分憑證。請確認 LINE Developers 設定中的 Scopes 已勾選 openid 並儲存。");
+            return;
+          }
+
           setProfile(profile);
           setUserId(profile.userId);
-          setIdToken(liff.getIDToken());
+          setIdToken(token);
           setIsLoggedIn(true);
 
           // Sync user to Firestore and get emailID
-          const currentIdToken = liff.getIDToken();
-          if (currentIdToken) {
-            const res = await fetch("/api/user/sync", {
-              method: "POST",
-              headers: { 
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${currentIdToken}`
-              },
-              body: JSON.stringify({
-                lineUserId: profile.userId,
-                displayName: profile.displayName,
-                pictureUrl: profile.pictureUrl,
-              }),
-            });
-            const data = await res.json();
-            if (data.emailID) {
-              setEmailID(data.emailID);
-            }
+          const res = await fetch("/api/user/sync", {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              lineUserId: profile.userId,
+              displayName: profile.displayName,
+              pictureUrl: profile.pictureUrl,
+            }),
+          });
+          const data = await res.json();
+          if (data.emailID) {
+            setEmailID(data.emailID);
           }
         } else {
           // 只在非首頁強制登入
