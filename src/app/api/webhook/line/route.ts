@@ -137,7 +137,7 @@ export async function POST(req: Request) {
           matched: false,
           originalText: event.message.text,
           isIncome,
-          items: [{ name: finalRemark, price: amount }]
+          items: aiResult?.items || [{ name: finalRemark, price: amount }]
         };
 
         await db.collection("manual_expenses").add(expenseData);
