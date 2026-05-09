@@ -55,16 +55,33 @@ npm install
 npm run dev
 ```
 
-## 📁 專案結構
+## 📁 功能與文件映射 (Feature to File Mapping)
 
-- `src/app`: Next.js 頁面與 API 路由
-  - `api/webhook/line`: LINE Bot Webhook 處理中心
-  - `trade`: 主要記帳管理介面
-- `src/lib/services`: 核心業務邏輯
-  - `classifier.ts`: 智能分類引擎
-  - `mof-parser.ts`: 電子發票解析與對帳邏輯
-- `src/components`: 可複用 React 組件
-- `src/lib/firebase`: Firebase 配置與管理工具
+為了方便開發與 AI 維護，以下列出核心功能與其對應的程式碼路徑：
+
+### 🤖 LINE Bot 相關
+- **LINE 訊息處理中心**: `src/app/api/webhook/line/route.ts` (處理記帳指令、回覆訊息)
+- **LIFF 登入與環境**: `src/components/providers/LiffProvider.tsx` (處理 LINE 登入、同步用戶資料)
+- **用戶資料同步 API**: `src/app/api/user/sync/route.ts` (同步頭像、名稱、權限狀態)
+
+### 📧 電子發票 (載具) 相關
+- **Email Webhook 接收端**: `src/app/api/webhook/email/route.ts` (接收轉寄的財政部 CSV 電子郵件)
+- **CSV 解析與對帳服務**: `src/lib/services/mof-parser.ts` (解析 CSV 格式、執行模糊對帳邏輯)
+- **待確認發票 API**: `src/app/api/invoices/pending/route.ts` (前端顯示對帳按鈕的資料來源)
+- **確認匯入 API**: `src/app/api/invoices/confirm/route.ts` (使用者點擊匯入後的寫入邏輯)
+
+### 🧠 智能分析相關
+- **AI 解析服務**: `src/lib/services/ai-parser.ts` (呼叫 AI 進行自然語言記帳解析)
+- **商店與分類識別**: `src/lib/services/classifier.ts` (統編識別、關鍵字分類匹配)
+
+### 💻 介面與資料管理
+- **主要交易頁面 (Trade)**: `src/app/trade/page.tsx` (顯示收支明細、對帳通知)
+- **交易清單組件**: `src/components/trade/TransactionList.tsx`
+- **手動支出 API**: `src/app/api/expenses/route.ts` (CRUD 交易記錄)
+- **分類管理頁面**: `src/app/settings/categories/page.tsx` (自定義分類與關鍵字)
+- **分類 API**: `src/app/api/categories/route.ts`
+
+---
 
 ## 📄 授權
 
