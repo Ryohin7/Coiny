@@ -31,7 +31,7 @@ export default function HomePage() {
   }, [idToken]);
 
   const { data: recordsData, mutate: mutateRecords, isLoading: recordsLoading } = useSWR(
-    userId ? `/api/expenses?userId=${userId}` : null, 
+    (userId && idToken) ? `/api/expenses?userId=${userId}` : null, 
     fetcher
   );
   
@@ -55,10 +55,11 @@ export default function HomePage() {
   const fetchRecords = () => mutateRecords();
 
   const fetchPending = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || !idToken) return;
     try {
-      const headers: Record<string, string> = {};
-      if (idToken) headers["Authorization"] = `Bearer ${idToken}`;
+      const headers: Record<string, string> = {
+        "Authorization": `Bearer ${idToken}`
+      };
       
       const res = await fetch(`/api/invoices/pending?userId=${userId}`, { headers });
       const data = await res.json();
@@ -71,10 +72,10 @@ export default function HomePage() {
   }, [userId, idToken]);
 
   useEffect(() => {
-    if (userId) {
+    if (userId && idToken) {
       fetchPending();
     }
-  }, [userId, fetchPending]);
+  }, [userId, idToken, fetchPending]);
 
   const handleConfirmImport = async () => {
     if (selectedPendingIds.length === 0) return;
@@ -182,11 +183,12 @@ export default function HomePage() {
   const monthlyBalance = totalIncome - totalExpense;
 
   useEffect(() => {
-    if (userId) {
+    if (userId && idToken) {
       const fetchAllCategories = async () => {
         try {
-          const headers: Record<string, string> = {};
-          if (idToken) headers["Authorization"] = `Bearer ${idToken}`;
+          const headers: Record<string, string> = {
+            "Authorization": `Bearer ${idToken}`
+          };
           
           const res = await fetch(`/api/categories?userId=${userId}`, { headers });
           const data = await res.json();
