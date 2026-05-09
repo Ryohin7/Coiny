@@ -1,56 +1,61 @@
 /**
- * AI 記帳解析服務 (具備詳細診斷日誌)
+ * AI 記帳解析服務 (優化 Prompt 版)
  */
 export async function parseWithAI(text: string) {
   console.log(`[AI-Parser] 收到解析請求: "${text}"`);
   
   if (process.env.AI_ENABLED !== "true") {
-    console.log("[AI-Parser] AI 模式未開啟 (AI_ENABLED != true)");
     return null;
   }
 
   try {
     const apiUrl = process.env.AI_API_URL;
-    if (!apiUrl) {
-      console.error("[AI-Parser] 錯誤: 未設定 AI_API_URL");
-      return null;
-    }
+    if (!apiUrl) return null;
 
-    console.log(`[AI-Parser] 正在連線至: ${apiUrl}`);
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    const prompt = `你是一個專業的記帳助理。請將以下使用者的輸入解析為 JSON 格式。
-    輸入內容： "${text}"
-    今天日期： "${new Date().toISOString().split('T')[0]}"
+    const prompt = `你是一個專業的記帳助理，負責將使用者的口語化描述轉換為精確的 JSON 數據。
 
-    請回傳以下格式的純 JSON，不要包含任何解釋：
-    {
-      "amount": 數字,
-      "category": "分類名稱",
-      "date": "YYYY/MM/DD",
-      "note": "備註內容",
-      "isIncome": 布林值
-    }
-    
-    注意：只回傳 JSON 對象本身，不要包裹在 \`\`\`json 標籤中。`;
+### 當前日期資訊：
+- 今天是：${todayStr}
+- 昨天是：${yesterdayStr}
+
+### 解析規則：
+1. **日期 (date)**: 
+   - 如果提到「昨天」，日期設為 "${yesterdayStr}"。
+   - 如果提到「今天」或未提到日期，日期設為 "${todayStr}"。
+   - 格式必須為 "YYYY/MM/DD"。
+2. **金額 (amount)**: 提取純數字。
+3. **收支判定 (isIncome)**: 
+   - 收入：領薪水、獎金、中獎、賣東西、收到轉帳、利息。
+   - 支出：買東西、吃飯、交通、付錢、繳費。
+4. **備註 (note)**: 簡短描述內容，例如「午餐麥當勞」。
+
+### 範例：
+- 輸入: "昨天吃晚餐花 200"
+  輸出: {"amount": 200, "category": "餐飲", "date": "${yesterdayStr.replace(/-/g, '/')}", "note": "晚餐", "isIncome": false}
+- 輸入: "領薪水 50000"
+  輸出: {"amount": 50000, "category": "收入", "date": "${todayStr.replace(/-/g, '/')}", "note": "領薪水", "isIncome": true}
+
+### 請處理以下輸入：
+"${text}"
+
+要求：只回傳 JSON，不要解釋。`;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超時
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "ngrok-skip-browser-warning": "true"
-    };
-
-    if (process.env.AI_API_KEY && 
-        process.env.AI_API_KEY !== "" && 
-        process.env.AI_API_KEY !== "lm-studio" && 
-        process.env.AI_API_KEY !== "optional") {
-      headers["Authorization"] = `Bearer ${process.env.AI_API_KEY}`;
-    }
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 增加到 10 秒
 
     const response = await fetch(apiUrl, {
       method: "POST",
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.AI_API_KEY || ""}`,
+        "ngrok-skip-browser-warning": "true"
+      },
       body: JSON.stringify({
         model: process.env.AI_MODEL || "local-model",
         messages: [{ role: "user", content: prompt }],
@@ -61,17 +66,10 @@ export async function parseWithAI(text: string) {
 
     clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[AI-Parser] API 回報錯誤 (${response.status}):`, errorText.substring(0, 200));
-      return null;
-    }
+    if (!response.ok) return null;
 
     const data = await response.json();
-    console.log("[AI-Parser] AI 原始回傳內容:", JSON.stringify(data).substring(0, 200));
-
     const content = data.choices[0].message.content.trim();
-    // 移除可能存在的 Markdown 標籤
     const cleanJson = content.replace(/```json|```/g, "").trim();
     const result = JSON.parse(cleanJson);
     
@@ -79,17 +77,13 @@ export async function parseWithAI(text: string) {
 
     return {
       amount: typeof result.amount === 'string' ? parseInt(result.amount) : Number(result.amount),
-      category: result.category,
+      category: result.category || "其他",
       date: (result.date || "").replace(/-/g, "/"),
-      note: result.note,
+      note: result.note || text,
       isIncome: result.isIncome === true || String(result.isIncome).toLowerCase() === 'true'
     };
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
-      console.error("[AI-Parser] 錯誤: AI 回應超時 (超過 8 秒)");
-    } else {
-      console.error("[AI-Parser] 解析過程中發生異常:", error.message);
-    }
+  } catch (error) {
+    console.error("[AI-Parser] 錯誤:", error);
     return null;
   }
 }
