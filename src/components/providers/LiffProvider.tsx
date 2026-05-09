@@ -57,21 +57,23 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
 
           // Sync user to Firestore and get emailID
           const currentIdToken = liff.getIDToken();
-          const res = await fetch("/api/user/sync", {
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${currentIdToken}`
-            },
-            body: JSON.stringify({
-              lineUserId: profile.userId,
-              displayName: profile.displayName,
-              pictureUrl: profile.pictureUrl,
-            }),
-          });
-          const data = await res.json();
-          if (data.emailID) {
-            setEmailID(data.emailID);
+          if (currentIdToken) {
+            const res = await fetch("/api/user/sync", {
+              method: "POST",
+              headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${currentIdToken}`
+              },
+              body: JSON.stringify({
+                lineUserId: profile.userId,
+                displayName: profile.displayName,
+                pictureUrl: profile.pictureUrl,
+              }),
+            });
+            const data = await res.json();
+            if (data.emailID) {
+              setEmailID(data.emailID);
+            }
           }
         } else {
           // 只在非首頁強制登入

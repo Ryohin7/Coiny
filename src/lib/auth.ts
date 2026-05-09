@@ -11,6 +11,10 @@ export async function verifyAuth(req: Request) {
   }
 
   const token = authHeader.split("Bearer ")[1];
+  if (!token || token === "null" || token === "undefined") {
+    console.error(`Auth: Invalid token value received: "${token}"`);
+    return null;
+  }
   console.log(`Auth: Received token starting with: ${token.substring(0, 10)}... (length: ${token.length})`);
   
   // 1. Try Firebase Admin Verification
