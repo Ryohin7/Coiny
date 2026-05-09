@@ -35,6 +35,8 @@ export async function POST(req: Request) {
     if (event.type === "message" && event.message.type === "text") {
       let text = event.message.text.trim();
       const userId = event.source?.userId;
+      if (!userId) continue;
+
       const db = getDb();
       if (!db) continue;
 
