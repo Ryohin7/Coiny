@@ -75,10 +75,10 @@ export function TransactionList({ isLoading, filteredRecords, onRecordClick }: T
             <div className="flex items-center justify-between px-2 pb-2 border-b border-gray-50 dark:border-gray-800">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-black text-primary">{mm}/{dd}</span>
-                <span className="text-[10px] font-bold opacity-40 uppercase">{dayOfWeek}</span>
+                <span className="text-xs font-bold opacity-40 uppercase">({dayOfWeek})</span>
               </div>
               {group.total > 0 && (
-                <span className="text-[11px] font-black text-primary">
+                <span className="text-xs font-black text-primary">
                   -{group.total.toLocaleString()}
                 </span>
               )}

@@ -211,13 +211,13 @@ export default function AnalysisPage() {
             <div className="flex gap-2 mt-1">
               <button 
                 onClick={() => setViewType("month")}
-                className={cn("text-[10px] px-2 py-0.5 rounded-full transition-all", viewType === "month" ? "bg-primary text-white font-bold" : "text-muted-foreground")}
+                className={cn("text-xs px-2 py-0.5 rounded-full transition-all", viewType === "month" ? "bg-primary text-white font-bold" : "text-muted-foreground")}
               >
                 月度
               </button>
               <button 
                 onClick={() => setViewType("year")}
-                className={cn("text-[10px] px-2 py-0.5 rounded-full transition-all", viewType === "year" ? "bg-primary text-white font-bold" : "text-muted-foreground")}
+                className={cn("text-xs px-2 py-0.5 rounded-full transition-all", viewType === "year" ? "bg-primary text-white font-bold" : "text-muted-foreground")}
               >
                 年度
               </button>
@@ -246,14 +246,14 @@ export default function AnalysisPage() {
             <div className="bg-primary text-white p-4 rounded-[2rem] space-y-1 shadow-lg">
               <div className="flex items-center gap-1.5 opacity-80">
                 <TrendingDown size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">總支出</span>
+                <span className="text-xs font-bold uppercase tracking-wider">總支出</span>
               </div>
               <p className="text-xl font-black">${stats.totalExpense.toLocaleString()}</p>
             </div>
             <div className="bg-white dark:bg-gray-900 p-4 rounded-[2rem] space-y-1 shadow-sm border border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-1.5 text-green-500">
                 <TrendingUp size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">總收入</span>
+                <span className="text-xs font-bold uppercase tracking-wider">總收入</span>
               </div>
               <p className="text-xl font-black">${stats.totalIncome.toLocaleString()}</p>
             </div>
@@ -270,7 +270,7 @@ export default function AnalysisPage() {
                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                    <div className="flex flex-col">
                      <span className="text-xs font-bold truncate max-w-[80px]">{item.name}</span>
-                     <span className="text-[10px] text-muted-foreground">
+                     <span className="text-xs text-muted-foreground">
                         {Math.round((item.value / stats.totalExpense) * 100)}%
                      </span>
                    </div>
@@ -296,7 +296,7 @@ export default function AnalysisPage() {
                     </div>
                     <div className="flex-1 text-left">
                       <h4 className="font-bold text-sm">{name}</h4>
-                      <p className="text-[10px] text-muted-foreground">{data.items.length} 筆交易</p>
+                      <p className="text-xs text-muted-foreground">{data.items.length} 筆交易</p>
                     </div>
                     <div className="text-right flex items-center gap-3">
                       <p className="font-bold text-sm">-${data.total.toLocaleString()}</p>
@@ -317,7 +317,7 @@ export default function AnalysisPage() {
                             <div key={idx} className="flex justify-between items-center text-xs">
                               <div className="flex flex-col">
                                 <span className="font-medium">{item.note || item.store || "無備註"}</span>
-                                <span className="text-[9px] text-muted-foreground">{item.date}</span>
+                                <span className="text-xs text-muted-foreground">{item.date}</span>
                               </div>
                               <span className="font-bold">${(item.totalAmount || item.amount).toLocaleString()}</span>
                             </div>

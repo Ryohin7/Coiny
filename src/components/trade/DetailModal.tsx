@@ -48,7 +48,7 @@ export function DetailModal({
                 </div>
                 <div>
                   <p className="text-orange-600 dark:text-orange-400 font-bold text-sm">對帳成功</p>
-                  <p className="text-orange-500/60 dark:text-orange-400/60 text-[10px]">此筆紀錄已與載具發票完全匹配</p>
+                  <p className="text-orange-500/60 dark:text-orange-400/60 text-xs">此筆紀錄已與載具發票完全匹配</p>
                 </div>
               </div>
             )}
@@ -66,7 +66,7 @@ export function DetailModal({
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-muted-foreground text-sm">{selectedRecord.date}</p>
                   {selectedRecord.isMatched && (
-                    <span className="text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-600 px-2 py-0.5 rounded-full font-bold">
+                    <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-600 px-2 py-0.5 rounded-full font-bold">
                       已對帳: {selectedRecord.invoiceStore}
                     </span>
                   )}

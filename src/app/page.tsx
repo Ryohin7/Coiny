@@ -53,7 +53,7 @@ export default function LandingPage() {
               進入記帳
               <ArrowRight size={20} />
             </Link>
-            <p className="text-[10px] md:text-xs text-muted-foreground mt-6 md:mt-8 uppercase tracking-widest font-bold opacity-50 md:text-left text-center">Smart Expense Tracking</p>
+            <p className="text-xs md:text-xs text-muted-foreground mt-6 md:mt-8 uppercase tracking-widest font-bold opacity-50 md:text-left text-center">Smart Expense Tracking</p>
           </motion.div>
         </div>
 
@@ -64,28 +64,28 @@ export default function LandingPage() {
               <Smartphone size={24} className="md:w-7 md:h-7" />
             </div>
             <h3 className="font-bold text-sm md:text-lg">LINE 記帳</h3>
-            <p className="text-[11px] md:text-sm text-muted-foreground leading-relaxed">隨手傳送，即時記錄。支援文字與圖片快速記帳。</p>
+            <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">隨手傳送，即時記錄。支援文字與圖片快速記帳。</p>
           </div>
           <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-white/40 dark:border-gray-800 text-left space-y-4 hover:border-primary/50 hover:shadow-lg transition-all group translate-y-0 md:translate-y-8">
             <div className="bg-orange-50 dark:bg-orange-900/20 w-12 h-12 md:w-14 md:h-14 rounded-[1.25rem] flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
               <Receipt size={24} className="md:w-7 md:h-7" />
             </div>
             <h3 className="font-bold text-sm md:text-lg">載具匯入</h3>
-            <p className="text-[11px] md:text-sm text-muted-foreground leading-relaxed">綁定財政部手機條碼，消費明細自動匯入對帳。</p>
+            <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">綁定財政部手機條碼，消費明細自動匯入對帳。</p>
           </div>
           <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-white/40 dark:border-gray-800 text-left space-y-4 hover:border-primary/50 hover:shadow-lg transition-all group">
             <div className="bg-orange-50 dark:bg-orange-900/20 w-12 h-12 md:w-14 md:h-14 rounded-[1.25rem] flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
               <Sparkles size={24} className="md:w-7 md:h-7" />
             </div>
             <h3 className="font-bold text-sm md:text-lg">智能分類</h3>
-            <p className="text-[11px] md:text-sm text-muted-foreground leading-relaxed">AI 幫你自動歸類消費項目，省去繁瑣的手動設定。</p>
+            <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">AI 幫你自動歸類消費項目，省去繁瑣的手動設定。</p>
           </div>
           <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-white/40 dark:border-gray-800 text-left space-y-4 hover:border-primary/50 hover:shadow-lg transition-all group translate-y-0 md:translate-y-8">
             <div className="bg-orange-50 dark:bg-orange-900/20 w-12 h-12 md:w-14 md:h-14 rounded-[1.25rem] flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
               <PieChart size={24} className="md:w-7 md:h-7" />
             </div>
             <h3 className="font-bold text-sm md:text-lg">圖表分析</h3>
-            <p className="text-[11px] md:text-sm text-muted-foreground leading-relaxed">一眼看懂收支流向，精緻的視覺化圖表幫助理財。</p>
+            <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">一眼看懂收支流向，精緻的視覺化圖表幫助理財。</p>
           </div>
         </motion.div>
       </motion.div>

@@ -61,7 +61,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <h2 className="text-xl font-bold">{profile?.displayName || "載入中..."}</h2>
-            <p className={`text-[10px] font-black tracking-widest ${membershipColor} px-3 py-1 rounded-full inline-block mt-1 uppercase`}>
+            <p className={`text-xs font-black tracking-widest ${membershipColor} px-3 py-1 rounded-full inline-block mt-1 uppercase`}>
               {membershipLabel}
             </p>
           </div>
@@ -83,11 +83,11 @@ export default function SettingsPage() {
                 <Copy size={16} />
               </button>
             </div>
-            <p className="text-[10px] opacity-70 leading-relaxed">
+            <p className="text-xs opacity-70 leading-relaxed">
               請將財政部發票通知郵件轉寄至此地址，系統將自動為您解析明細並完成對帳。
             </p>
             <div className="pt-2">
-              <button className="flex items-center gap-1 text-[10px] font-bold border-b border-current pb-0.5">
+              <button className="flex items-center gap-1 text-xs font-bold border-b border-current pb-0.5">
                 如何設定自動轉寄 <ExternalLink size={10} />
               </button>
             </div>
@@ -148,7 +148,7 @@ export default function SettingsPage() {
 
       {/* Footer */}
       <footer className="text-center py-4">
-        <p className="text-[10px] text-muted-foreground">Coiny v1.0.0 • Made with ❤️</p>
+        <p className="text-xs text-muted-foreground">Coiny v1.0.0 • Made with ❤️</p>
       </footer>
     </div>
   );

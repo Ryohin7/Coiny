@@ -398,7 +398,7 @@ export default function HomePage() {
             </div>
             <div className="text-left">
               <p className="text-primary font-bold text-sm">有新的載具資料匯入</p>
-              <p className="text-primary/60 text-[10px]">點擊查看並確認匯入 ({pendingInvoices.length} 筆)</p>
+              <p className="text-primary/60 text-xs">點擊查看並確認匯入 ({pendingInvoices.length} 筆)</p>
             </div>
           </div>
           <Plus size={20} className="rotate-180 text-primary" />

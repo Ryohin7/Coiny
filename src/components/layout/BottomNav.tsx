@@ -44,7 +44,7 @@ export default function BottomNav() {
               )}
               <div className={cn("relative z-10 flex flex-col items-center gap-1", isActive && "text-black dark:text-white")}>
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-xs font-medium">{item.label}</span>
               </div>
             </Link>
           );

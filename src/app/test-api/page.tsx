@@ -114,18 +114,18 @@ export default function TestApiPage() {
                     {result.classification.icon}
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest opacity-60 font-bold">自動分類結果</p>
+                    <p className="text-xs uppercase tracking-widest opacity-60 font-bold">自動分類結果</p>
                     <h2 className="text-3xl font-black">{result.classification.category}</h2>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pt-4">
                   <div className="bg-white/5 dark:bg-black/5 p-4 rounded-2xl backdrop-blur-md">
-                    <p className="text-[10px] opacity-60 mb-1">行業代碼 (前四碼)</p>
+                    <p className="text-xs opacity-60 mb-1">行業代碼 (前四碼)</p>
                     <p className="font-mono font-bold text-lg">{result.code}</p>
                   </div>
                   <div className="bg-white/5 dark:bg-black/5 p-4 rounded-2xl backdrop-blur-md">
-                    <p className="text-[10px] opacity-60 mb-1">統一編號</p>
+                    <p className="text-xs opacity-60 mb-1">統一編號</p>
                     <p className="font-mono font-bold text-lg">{taxId}</p>
                   </div>
                 </div>
@@ -140,11 +140,11 @@ export default function TestApiPage() {
               </div>
               <div className="space-y-4">
                 <div>
-                  <p className="text-[10px] text-muted-foreground mb-1">公司名稱</p>
+                  <p className="text-xs text-muted-foreground mb-1">公司名稱</p>
                   <p className="font-bold">{result.name}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-muted-foreground mb-1">完整行業名稱與代號</p>
+                  <p className="text-xs text-muted-foreground mb-1">完整行業名稱與代號</p>
                   <p className="text-sm font-medium">{result.fullIndustry}</p>
                 </div>
               </div>
@@ -154,9 +154,9 @@ export default function TestApiPage() {
             <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-[2.5rem] space-y-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Info size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-widest">原始回傳資料 (DEBUG)</span>
+                <span className="text-xs font-bold uppercase tracking-widest">原始回傳資料 (DEBUG)</span>
               </div>
-              <pre className="text-[10px] font-mono overflow-auto max-h-48 opacity-60">
+              <pre className="text-xs font-mono overflow-auto max-h-48 opacity-60">
                 {JSON.stringify(result.raw, null, 2)}
               </pre>
             </div>

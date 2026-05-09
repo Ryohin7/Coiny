@@ -35,10 +35,10 @@ export function TransactionItem({ record, onClick }: TransactionItemProps) {
         <div className="flex items-center gap-2 mb-0.5">
           <h4 className="font-bold text-sm truncate">{record.category || "未分類"}</h4>
           {isInvoice && (
-            <span className="text-[9px] px-1.5 py-0.5 bg-white dark:bg-gray-800 text-primary rounded-md font-bold border border-orange-100 dark:border-orange-900/50">載具</span>
+            <span className="text-xs px-1.5 py-0.5 bg-white dark:bg-gray-800 text-primary rounded-md font-bold border border-orange-100 dark:border-orange-900/50">載具</span>
           )}
           {record.isMatched && (
-            <span className="text-[9px] px-1.5 py-0.5 bg-orange-50 dark:bg-orange-900/20 text-primary rounded-md font-bold flex items-center gap-1">
+            <span className="text-xs px-1.5 py-0.5 bg-orange-50 dark:bg-orange-900/20 text-primary rounded-md font-bold flex items-center gap-1">
               <Check size={10} /> 已對帳
             </span>
           )}

@@ -70,7 +70,7 @@ export function PendingImportModal({
                   <span className="text-xl">{inv.icon || "🧾"}</span>
                   <div>
                     <h4 className="font-bold text-sm">{inv.store}</h4>
-                    <p className="text-[10px] text-muted-foreground">{inv.date}</p>
+                    <p className="text-xs text-muted-foreground">{inv.date}</p>
                   </div>
                 </div>
                 <p className="font-bold text-sm">${inv.totalAmount.toLocaleString()}</p>
@@ -82,14 +82,14 @@ export function PendingImportModal({
                     <Check size={14} />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400">發現相符的手動記帳</p>
-                    <p className="text-[9px] text-muted-foreground">
+                    <p className="text-xs font-bold text-blue-600 dark:text-blue-400">發現相符的手動記帳</p>
+                    <p className="text-xs text-muted-foreground">
                       {inv.matchedManualInfo.date === inv.date ? "當日" : (inv.matchedManualInfo.date < inv.date ? "前一日" : "後一日")} • ${inv.matchedManualInfo.amount} • {inv.matchedManualInfo.note}
                     </p>
                   </div>
                 </div>
               ) : (
-                <p className="mt-2 text-[9px] text-muted-foreground px-1 italic">未發現相符的手動記帳</p>
+                <p className="mt-2 text-xs text-muted-foreground px-1 italic">未發現相符的手動記帳</p>
               )}
             </div>
           ))}

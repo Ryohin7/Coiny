@@ -326,14 +326,14 @@ export default function CategoryManagementPage() {
                       {((cat.keywords && cat.keywords.length > 0) ? cat.keywords : (
                         [...DEFAULT_CATEGORIES, ...DEFAULT_INCOME_CATEGORIES].find(d => d.name === cat.name)?.keywords || []
                       )).map((kw, i) => (
-                        <span key={i} className="text-[10px] font-bold px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-full text-muted-foreground">
+                        <span key={i} className="text-xs font-bold px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-full text-muted-foreground">
                           #{kw}
                         </span>
                       ))}
                       {((cat.keywords && cat.keywords.length > 0) ? cat.keywords : (
                         [...DEFAULT_CATEGORIES, ...DEFAULT_INCOME_CATEGORIES].find(d => d.name === cat.name)?.keywords || []
                       )).length === 0 && (
-                        <span className="text-[10px] text-muted-foreground italic">無關鍵字，點擊編輯新增</span>
+                        <span className="text-xs text-muted-foreground italic">無關鍵字，點擊編輯新增</span>
                       )}
                     </div>
                   </motion.div>
@@ -378,7 +378,7 @@ export default function CategoryManagementPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-4 gap-3">
                   <div className="col-span-1">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">圖示</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground ml-1">圖示</label>
                     <input
                       type="text"
                       maxLength={2}
@@ -388,7 +388,7 @@ export default function CategoryManagementPage() {
                     />
                   </div>
                   <div className="col-span-3">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">分類名稱</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground ml-1">分類名稱</label>
                     <input
                       type="text"
                       value={editingCat ? editingCat.name : newCat.name}
@@ -399,7 +399,7 @@ export default function CategoryManagementPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">自動判定關鍵字 (用逗號隔開)</label>
+                  <label className="text-xs font-bold uppercase text-muted-foreground ml-1">自動判定關鍵字 (用逗號隔開)</label>
                   <textarea
                     value={editingCat ? editingCat.keywords.join(", ") : newCat.keywords}
                     onChange={(e) => {
@@ -462,7 +462,7 @@ export default function CategoryManagementPage() {
                         <h4 className="font-bold text-lg">{s.name}</h4>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {s.keywords.map((kw: string, i: number) => (
-                            <span key={i} className="text-[10px] bg-white/50 dark:bg-black/20 px-2 py-0.5 rounded-full text-muted-foreground">#{kw}</span>
+                            <span key={i} className="text-xs bg-white/50 dark:bg-black/20 px-2 py-0.5 rounded-full text-muted-foreground">#{kw}</span>
                           ))}
                         </div>
                       </div>
