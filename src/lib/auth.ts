@@ -34,23 +34,29 @@ export async function verifyAuth(req: Request) {
     const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
     const channelId = process.env.LINE_CHANNEL_ID || liffId?.split('-')[0];
     
-    if (!channelId) {
-        console.error("Auth: Missing LINE_CHANNEL_ID or NEXT_PUBLIC_LIFF_ID");
+    console.log(`Auth: Verifying with Channel ID: ${channelId}`);
+
+    const verifyToken = async (cid?: string) => {
+      const params = new URLSearchParams();
+      params.append('id_token', token);
+      if (cid) params.append('client_id', cid);
+
+      return fetch('https://api.line.me/oauth2/v2.1/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+      });
+    };
+
+    let response = await verifyToken(channelId);
+    let result = await response.json();
+
+    // If audience check fails, try verifying without client_id
+    if (!response.ok && result.error_description?.includes("Audience")) {
+      console.warn("Auth: Audience check failed, retrying without client_id...");
+      response = await verifyToken();
+      result = await response.json();
     }
-
-    const params = new URLSearchParams();
-    params.append('id_token', token);
-    if (channelId) {
-        params.append('client_id', channelId);
-    }
-
-    const response = await fetch('https://api.line.me/oauth2/v2.1/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString(),
-    });
-
-    const result = await response.json();
 
     if (response.ok) {
       // LINE verification successful
