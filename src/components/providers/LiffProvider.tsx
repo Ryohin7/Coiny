@@ -58,18 +58,26 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
             return;
           }
 
-          // 檢查 Token 是否過期
+          // 檢查 Token 是否過期 (使用更健壯的解碼方式)
           try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            
+            const payload = JSON.parse(jsonPayload);
             const now = Math.floor(Date.now() / 1000);
-            if (payload.exp && payload.exp < now) {
-              console.warn("LIFF: Token expired, logging out...");
+            
+            // 如果過期或即將過期（預留 30 秒緩衝）
+            if (payload.exp && payload.exp < (now + 30)) {
+              console.warn("LIFF: Token expired or about to expire, forcing re-login...");
               liff.logout();
               liff.login();
               return;
             }
           } catch (e) {
-            console.error("LIFF: Failed to parse token for expiration check");
+            console.error("LIFF: Failed to parse token for expiration check", e);
           }
 
           setProfile(profile);
