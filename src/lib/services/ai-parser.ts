@@ -41,7 +41,10 @@ export async function parseWithAI(text: string) {
       "ngrok-skip-browser-warning": "true"
     };
 
-    if (process.env.AI_API_KEY) {
+    if (process.env.AI_API_KEY && 
+        process.env.AI_API_KEY !== "" && 
+        process.env.AI_API_KEY !== "lm-studio" && 
+        process.env.AI_API_KEY !== "optional") {
       headers["Authorization"] = `Bearer ${process.env.AI_API_KEY}`;
     }
 
