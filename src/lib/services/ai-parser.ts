@@ -78,11 +78,11 @@ export async function parseWithAI(text: string) {
     console.log("[AI-Parser] 解析成功:", result);
 
     return {
-      amount: Number(result.amount),
+      amount: typeof result.amount === 'string' ? parseInt(result.amount) : Number(result.amount),
       category: result.category,
       date: (result.date || "").replace(/-/g, "/"),
       note: result.note,
-      isIncome: Boolean(result.isIncome)
+      isIncome: result.isIncome === true || String(result.isIncome).toLowerCase() === 'true'
     };
   } catch (error: any) {
     if (error.name === 'AbortError') {
