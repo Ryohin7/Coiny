@@ -86,8 +86,31 @@ import { classifyMerchant } from "./classifier";
 async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
   const db = getDb();
   if (!db) return;
+
+  // 1. Duplicate Check: Skip if this invoice number already exists
+  const existingInvoice = await db.collection("invoices")
+    .where("userId", "==", userId)
+    .where("invNum", "==", invoice.invNum)
+    .limit(1)
+    .get();
   
-  // 1. Fuzzy Match Logic (+/- 1 day)
+  if (!existingInvoice.empty) {
+    console.log(`Invoice ${invoice.invNum} already exists, skipping.`);
+    return;
+  }
+
+  // Also check pending
+  const existingPending = await db.collection("pending_invoices")
+    .where("userId", "==", userId)
+    .where("invNum", "==", invoice.invNum)
+    .limit(1)
+    .get();
+  
+  if (!existingPending.empty) {
+    return;
+  }
+  
+  // 2. Fuzzy Match Logic (+/- 1 day)
   const targetDate = new Date(invoice.date);
   const prevDate = new Date(targetDate);
   prevDate.setDate(targetDate.getDate() - 1);
@@ -101,18 +124,25 @@ async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
   ];
 
   // Search for potential manual entries across these dates
+  // We prioritize exact date matches
   const manualQuery = await db
     .collection("manual_expenses")
     .where("userId", "==", userId)
     .where("date", "in", dateStrings)
     .where("amount", "==", invoice.totalAmount)
     .where("matched", "==", false)
-    .limit(1)
     .get();
 
   let matchedManualInfo = null;
   if (!manualQuery.empty) {
-    const doc = manualQuery.docs[0];
+    // Priority: 1. Exact date match, 2. Closest date
+    const sortedDocs = manualQuery.docs.sort((a, b) => {
+      const distA = Math.abs(new Date(a.data().date).getTime() - targetDate.getTime());
+      const distB = Math.abs(new Date(b.data().date).getTime() - targetDate.getTime());
+      return distA - distB;
+    });
+
+    const doc = sortedDocs[0];
     const data = doc.data();
     matchedManualInfo = {
       id: doc.id,
@@ -122,8 +152,7 @@ async function saveAndMatchInvoice(invoice: Invoice, userId: string) {
     };
   }
 
-  // 2. Save to PENDING collection
-  // Instead of direct import, we save to a pending queue for user confirmation
+  // 3. Save to PENDING collection
   await db.collection("pending_invoices").add({
     ...invoice,
     userId,

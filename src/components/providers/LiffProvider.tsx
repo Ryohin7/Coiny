@@ -9,6 +9,7 @@ interface LiffContextType {
   userId: string | null;
   profile: any | null;
   emailID: string | null;
+  idToken: string | null;
   error: string | null;
 }
 
@@ -29,6 +30,7 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [emailID, setEmailID] = useState<string | null>(null);
+  const [idToken, setIdToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [mounted, setMounted] = useState(false);
@@ -49,12 +51,17 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
           const profile = await liff.getProfile();
           setProfile(profile);
           setUserId(profile.userId);
+          setIdToken(liff.getIDToken());
           setIsLoggedIn(true);
 
           // Sync user to Firestore and get emailID
+          const currentIdToken = liff.getIDToken();
           const res = await fetch("/api/user/sync", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${currentIdToken}`
+            },
             body: JSON.stringify({
               lineUserId: profile.userId,
               displayName: profile.displayName,
@@ -100,7 +107,7 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
   // 防止 Hydration Mismatch：初次渲染（Server-side）不應包含 window 邏輯
   if (!mounted) {
     return (
-      <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, emailID, error }}>
+      <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, emailID, idToken, error }}>
         <div style={{ opacity: 0 }}>{children}</div>
       </LiffContext.Provider>
     );
@@ -130,7 +137,7 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
 
 
   return (
-    <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, emailID, error }}>
+    <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, userId, profile, emailID, idToken, error }}>
       {children}
     </LiffContext.Provider>
   );

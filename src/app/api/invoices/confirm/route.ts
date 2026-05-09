@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/firebase/admin";
 import * as admin from "firebase-admin";
+import { verifyAuth } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
@@ -8,6 +9,12 @@ export async function POST(req: Request) {
 
     if (!userId || !invoiceIds || !Array.isArray(invoiceIds)) {
       return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
+    }
+
+    // Verify authentication
+    const decodedToken = await verifyAuth(req);
+    if (!decodedToken || (decodedToken.uid !== userId && decodedToken.sub !== userId)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const db = getDb();
@@ -54,9 +61,10 @@ export async function POST(req: Request) {
       // 3. Delete from pending
       batch.delete(docRef);
 
-      await batch.commit();
       results.confirmed++;
     }
+
+    await batch.commit();
 
     return NextResponse.json({ success: true, results });
   } catch (error: any) {
@@ -71,6 +79,12 @@ export async function DELETE(req: Request) {
   
       if (!userId || !invoiceIds || !Array.isArray(invoiceIds)) {
         return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
+      }
+
+      // Verify authentication
+      const decodedToken = await verifyAuth(req);
+      if (!decodedToken || (decodedToken.uid !== userId && decodedToken.sub !== userId)) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
   
       const db = getDb();

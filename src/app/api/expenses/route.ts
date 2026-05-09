@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/firebase/admin";
 
+import { verifyAuth } from "@/lib/auth";
+
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
@@ -11,27 +13,31 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing userId" }, { status: 400 });
   }
 
+  // Verify authentication
+  const decodedToken = await verifyAuth(req);
+  if (!decodedToken || (decodedToken.uid !== userId && decodedToken.sub !== userId)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const db = getDb();
     if (!db) throw new Error("DB not initialized");
 
-    // Fetch manual expenses
-    const manualSnapshot = await db
-      .collection("manual_expenses")
-      .where("userId", "==", userId)
-      .get();
+    // Fetch manual expenses and invoices in parallel
+    const [manualSnapshot, invoiceSnapshot] = await Promise.all([
+      db.collection("manual_expenses")
+        .where("userId", "==", userId)
+        .get(),
+      db.collection("invoices")
+        .where("userId", "==", userId)
+        .get()
+    ]);
 
     const manualExpenses = manualSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
       type: "manual",
     }));
-
-    // Fetch invoices
-    const invoiceSnapshot = await db
-      .collection("invoices")
-      .where("userId", "==", userId)
-      .get();
 
     const invoices = invoiceSnapshot.docs.map(doc => ({
       id: doc.id,

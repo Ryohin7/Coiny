@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/firebase/admin";
+import { verifyAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,12 @@ export async function GET(req: Request) {
 
   if (!userId) {
     return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  }
+
+  // Verify authentication
+  const decodedToken = await verifyAuth(req);
+  if (!decodedToken || (decodedToken.uid !== userId && decodedToken.sub !== userId)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {

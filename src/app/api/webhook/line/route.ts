@@ -39,15 +39,39 @@ export async function POST(req: Request) {
 
       if (!userId) continue;
 
-      // Match: [Date] [Category] [Amount] [Remark]
-      // Regex: Optional Date (M/D), Mandatory Category (non-space), Mandatory Amount (digits), Optional Remark (anything)
-      const commandMatch = text.match(/^(?:(\d{1,2}\/\d{1,2})\s+)?(\S+)\s+(\d+)(?:\s+(.+))?$/);
+      // Improved Parser: Supports [Date] Category Amount [Remark] OR [Date] Amount Category [Remark]
+      const tokens = text.split(/\s+/);
+      let datePart: string | undefined;
+      let categoryInput: string | undefined;
+      let amount: number | undefined;
+      let remark: string | undefined;
 
-      if (commandMatch) {
-        const datePart = commandMatch[1];
-        const categoryInput = commandMatch[2];
-        const amount = parseInt(commandMatch[3]);
-        const remark = commandMatch[4]?.trim() || "";
+      // 1. Check if first token is Date (M/D)
+      let startIndex = 0;
+      if (tokens[0].match(/^\d{1,2}\/\d{1,2}$/)) {
+        datePart = tokens[0];
+        startIndex = 1;
+      }
+
+      // 2. Identify Amount and Category from remaining tokens
+      const remainingTokens = tokens.slice(startIndex);
+      
+      // Try to find the first token that is a number (Amount)
+      const amountIndex = remainingTokens.findIndex(t => /^\d+$/.test(t));
+      
+      if (amountIndex !== -1) {
+        amount = parseInt(remainingTokens[amountIndex]);
+        // Category is usually the other token
+        if (amountIndex === 0 && remainingTokens.length > 1) {
+          categoryInput = remainingTokens[1];
+          remark = remainingTokens.slice(2).join(" ");
+        } else if (amountIndex > 0) {
+          categoryInput = remainingTokens[0];
+          remark = remainingTokens.slice(1, amountIndex).concat(remainingTokens.slice(amountIndex + 1)).join(" ");
+        }
+      }
+
+      if (categoryInput && amount !== undefined) {
 
         let dateStr: string;
         const now = new Date();

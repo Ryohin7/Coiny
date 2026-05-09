@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/firebase/admin";
+import { verifyAuth } from "@/lib/auth";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -10,7 +11,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!db) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
     const collection = type === "invoice" ? "invoices" : "manual_expenses";
-    await db.collection(collection).doc(id).update({
+    const docRef = db.collection(collection).doc(id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return NextResponse.json({ error: "Record not found" }, { status: 404 });
+    }
+
+    const data = doc.data();
+    const userId = data?.userId;
+
+    // Verify authentication and ownership
+    const decodedToken = await verifyAuth(req);
+    if (!decodedToken || (decodedToken.uid !== userId && decodedToken.sub !== userId)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await docRef.update({
       category,
       icon,
       manualCategory: true // 標記為手動修改，避免被自動分類覆蓋
@@ -32,7 +49,23 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     if (!db) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
 
     const collection = type === "invoice" ? "invoices" : "manual_expenses";
-    await db.collection(collection).doc(id).delete();
+    const docRef = db.collection(collection).doc(id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return NextResponse.json({ error: "Record not found" }, { status: 404 });
+    }
+
+    const data = doc.data();
+    const userId = data?.userId;
+
+    // Verify authentication and ownership
+    const decodedToken = await verifyAuth(req);
+    if (!decodedToken || (decodedToken.uid !== userId && decodedToken.sub !== userId)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await docRef.delete();
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

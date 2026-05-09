@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/firebase/admin";
+import { verifyAuth } from "@/lib/auth";
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
     if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+
+    const decodedToken = await verifyAuth(req);
+    if (!decodedToken || (decodedToken.uid !== userId && decodedToken.sub !== userId)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const db = getDb();
     if (!db) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });
@@ -46,6 +52,11 @@ export async function POST(req: Request) {
     }
 
     const { userId, name, icon, keywords, isIncome } = result.data;
+
+    const decodedToken = await verifyAuth(req);
+    if (!decodedToken || (decodedToken.uid !== userId && decodedToken.sub !== userId)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const db = getDb();
     if (!db) return NextResponse.json({ error: "DB not initialized" }, { status: 500 });

@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Coiny - 你的專屬智能記帳管家
 
-## Getting Started
+Coiny 是一款結合 LINE Bot、財政部電子發票載具匯入與 AI 自動分類的智能記帳 Web App。旨在提供用戶最無縫、最直覺的財務管理體驗。
 
-First, run the development server:
+## 🌟 核心功能
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **LINE 隨手記帳**：直接透過 LINE 聊天室傳送文字（如：`100 午餐`），系統自動識別日期、分類、金額與備註。
+- **電子發票自動對帳**：支援財政部電子發票 CSV 匯入，自動匹配手動記錄，減少漏記與重複記錄。
+- **AI 智能分類引擎**：內建強大的分類庫與商店統編識別，並支援用戶自定義關鍵字，讓每筆消費精確歸類。
+- **精緻視覺化介面**：採用現代感設計，支援深色模式，提供清晰的收支概覽與詳細明細。
+- **LIFF 整合**：完美整合 LINE 內部瀏覽器（LIFF），提供如原生 App 般的流暢體驗。
+
+## 🛠️ 技術棧
+
+- **Frontend**: Next.js 15 (App Router), React, Tailwind CSS, Framer Motion, Lucide React
+- **Backend**: Next.js API Routes, Firebase Admin SDK
+- **Database/Auth**: Firebase Firestore, Firebase Auth / LIFF
+- **Integrations**: LINE Messaging API, LINE LIFF SDK, g0v 公司資料 API
+
+## 🚀 快速開始
+
+### 環境變數設定
+
+在根目錄創建 `.env.local` 並填入以下資訊：
+
+```env
+# LINE Configuration
+LINE_CHANNEL_ACCESS_TOKEN=your_token
+LINE_CHANNEL_SECRET=your_secret
+NEXT_PUBLIC_LIFF_ID=your_liff_id
+
+# Firebase Admin Configuration
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_CLIENT_EMAIL=your_client_email
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 安裝與啟動
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 專案結構
 
-## Learn More
+- `src/app`: Next.js 頁面與 API 路由
+  - `api/webhook/line`: LINE Bot Webhook 處理中心
+  - `trade`: 主要記帳管理介面
+- `src/lib/services`: 核心業務邏輯
+  - `classifier.ts`: 智能分類引擎
+  - `mof-parser.ts`: 電子發票解析與對帳邏輯
+- `src/components`: 可複用 React 組件
+- `src/lib/firebase`: Firebase 配置與管理工具
 
-To learn more about Next.js, take a look at the following resources:
+## 📄 授權
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+本專案採用 MIT 授權。

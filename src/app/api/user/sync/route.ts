@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/firebase/admin";
 import * as admin from "firebase-admin";
+import { verifyAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,12 @@ export async function POST(req: Request) {
 
     if (!lineUserId) {
       return NextResponse.json({ error: "Missing lineUserId" }, { status: 400 });
+    }
+
+    // Verify authentication
+    const decodedToken = await verifyAuth(req);
+    if (!decodedToken || (decodedToken.uid !== lineUserId && decodedToken.sub !== lineUserId)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const db = getDb();
