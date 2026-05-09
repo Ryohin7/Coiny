@@ -19,6 +19,7 @@ const LiffContext = createContext<LiffContextType>({
   userId: null,
   profile: null,
   emailID: null,
+  idToken: null,
   error: null,
 });
 
