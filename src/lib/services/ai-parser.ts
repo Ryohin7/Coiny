@@ -36,14 +36,18 @@ export async function parseWithAI(text: string) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超時
 
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true"
+    };
+
+    if (process.env.AI_API_KEY) {
+      headers["Authorization"] = `Bearer ${process.env.AI_API_KEY}`;
+    }
+
     const response = await fetch(apiUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.AI_API_KEY || "lm-studio"}`,
-        // 針對 ngrok 的特殊 Header，跳過警告頁面
-        "ngrok-skip-browser-warning": "true"
-      },
+      headers,
       body: JSON.stringify({
         model: process.env.AI_MODEL || "local-model",
         messages: [{ role: "user", content: prompt }],
