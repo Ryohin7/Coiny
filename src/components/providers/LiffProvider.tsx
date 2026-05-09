@@ -101,12 +101,25 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
         <div className="space-y-4">
           <h1 className="text-xl font-bold text-red-500">LIFF 初始化失敗</h1>
           <p className="text-sm text-muted-foreground">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="bg-black text-white px-6 py-2 rounded-full"
-          >
-            重試
-          </button>
+          <div className="flex flex-col gap-2">
+            <button 
+              onClick={() => {
+                if (liff.isLoggedIn()) {
+                  liff.logout();
+                }
+                window.location.reload();
+              }}
+              className="bg-primary text-white px-6 py-2 rounded-full font-bold"
+            >
+              重新登入並更新授權
+            </button>
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-gray-100 text-gray-800 px-6 py-2 rounded-full font-medium"
+            >
+              重試
+            </button>
+          </div>
         </div>
       </div>
     );
