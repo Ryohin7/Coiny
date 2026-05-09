@@ -34,7 +34,7 @@ const DEFAULT_INCOME_CATEGORIES = [
 ];
 
 export default function CategoryManagementPage() {
-  const { userId } = useLiff();
+  const { userId, idToken } = useLiff();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -43,23 +43,21 @@ export default function CategoryManagementPage() {
   const [activeTab, setActiveTab] = useState<"expense" | "income">("expense");
 
   useEffect(() => {
-    if (userId) fetchCategories();
-  }, [userId]);
+    if (userId && idToken) fetchCategories();
+  }, [userId, idToken]);
 
   const fetchCategories = async () => {
+    if (!userId || !idToken) return;
     try {
-      const res = await fetch(`/api/categories?userId=${userId}`);
+      const res = await fetch(`/api/categories?userId=${userId}`, {
+        headers: { "Authorization": `Bearer ${idToken}` }
+      });
       const data = await res.json();
 
       const userCats = data.categories as Category[];
       const combinedDefaults = [...DEFAULT_CATEGORIES, ...DEFAULT_INCOME_CATEGORIES];
 
-      // 檢查是否缺少基礎類別 (依名稱比對)
-      const missingDefaults = combinedDefaults.filter(
-        def => !userCats.some(userCat => userCat.name === def.name)
-      );
-
-      if (missingDefaults.length > 0 && userCats.length === 0) {
+      if (userCats.length === 0) {
         await seedDefaultCategories();
       } else {
         setCategories(userCats);
@@ -72,24 +70,27 @@ export default function CategoryManagementPage() {
   };
 
   const seedDefaultCategories = async (onlyMissing = false) => {
+    if (!userId || !idToken) return;
     try {
-      const currentRes = await fetch(`/api/categories?userId=${userId}`);
-      const currentData = await currentRes.json();
-      const currentNames = currentData.categories.map((c: any) => c.name);
+      const headers = { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${idToken}`
+      };
+
       const combinedDefaults = [...DEFAULT_CATEGORIES, ...DEFAULT_INCOME_CATEGORIES];
 
       for (const cat of combinedDefaults) {
-        if (onlyMissing && currentNames.includes(cat.name)) continue;
-
         await fetch("/api/categories", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({ userId, ...cat }),
         });
       }
 
       // 重新整理頁面資料
-      const finalRes = await fetch(`/api/categories?userId=${userId}`);
+      const finalRes = await fetch(`/api/categories?userId=${userId}`, {
+        headers: { "Authorization": `Bearer ${idToken}` }
+      });
       const finalData = await finalRes.json();
       setCategories(finalData.categories);
     } catch (error) {
@@ -98,11 +99,14 @@ export default function CategoryManagementPage() {
   };
 
   const handleAddCategory = async () => {
-    if (!newCat.name) return;
+    if (!newCat.name || !userId || !idToken) return;
     try {
       const res = await fetch("/api/categories", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           userId,
           name: newCat.name,
@@ -122,9 +126,12 @@ export default function CategoryManagementPage() {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (!confirm("確定要刪除此分類嗎？")) return;
+    if (!confirm("確定要刪除此分類嗎？") || !idToken) return;
     try {
-      const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/categories/${id}`, { 
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${idToken}` }
+      });
       if (res.ok) fetchCategories();
     } catch (error) {
       alert("刪除失敗");
@@ -132,11 +139,14 @@ export default function CategoryManagementPage() {
   };
 
   const handleUpdateCategory = async () => {
-    if (!editingCat) return;
+    if (!editingCat || !idToken) return;
     try {
       const res = await fetch(`/api/categories/${editingCat.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           name: editingCat.name,
           icon: editingCat.icon,

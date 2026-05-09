@@ -88,7 +88,7 @@ const DARK_COLORS = [
 ];
 
 export default function AnalysisPage() {
-  const { userId } = useLiff();
+  const { userId, idToken } = useLiff();
   const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -97,10 +97,14 @@ export default function AnalysisPage() {
 
   useEffect(() => {
     const fetchRecords = async () => {
-      if (!userId) return;
+      if (!userId || !idToken) return;
       setLoading(true);
       try {
-        const res = await fetch(`/api/expenses?userId=${userId}`);
+        const res = await fetch(`/api/expenses?userId=${userId}`, {
+          headers: {
+            "Authorization": `Bearer ${idToken}`
+          }
+        });
         const data = await res.json();
         setRecords(data.records || []);
       } catch (error) {
@@ -111,7 +115,7 @@ export default function AnalysisPage() {
     };
 
     fetchRecords();
-  }, [userId]);
+  }, [userId, idToken]);
 
   const filteredRecords = useMemo(() => {
     return records.filter(rec => {

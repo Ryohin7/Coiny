@@ -7,7 +7,7 @@ import { User, Mail, Shield, Bell, ChevronRight, Copy, ExternalLink, RefreshCcw,
 import { useLiff } from "@/components/providers/LiffProvider";
 
 export default function SettingsPage() {
-  const { profile, userId, emailID } = useLiff();
+  const { profile, userId, emailID, idToken } = useLiff();
   const forwardEmail = emailID ? `${emailID}@coinyapp.com` : "載入中...";
 
   const copyToClipboard = () => {
@@ -18,17 +18,20 @@ export default function SettingsPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefreshCategories = async () => {
-    if (!userId) return;
+    if (!userId || !idToken) return;
     setRefreshing(true);
     try {
       const res = await fetch("/api/expenses/refresh-category", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
         body: JSON.stringify({ userId }),
       });
       const data = await res.json();
       alert(data.message || "分類更新完成！");
-      window.location.reload(); // 重新整理頁面以顯示新分類
+      window.location.reload(); 
     } catch (error) {
       alert("更新失敗，請稍後再試");
     } finally {
