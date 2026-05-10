@@ -176,8 +176,7 @@ export async function POST(req: Request) {
                         text: isIncome ? "INCOME RECORDED" : "EXPENSE RECORDED",
                         weight: "bold",
                         size: "xs",
-                        color: "#2563EB",
-                        tracking: "0.2em"
+                        color: "#2563EB"
                       },
                       {
                         type: "separator",
