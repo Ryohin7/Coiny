@@ -78,25 +78,45 @@ export async function POST(req: Request) {
 
       const dateStr = targetDate.toISOString().split("T")[0].replace(/-/g, "/");
 
-      // 2. 金額與內容解析 (強化型 Regex 運算)
-      const segments = text.split(/(\d+)/); // 按數字切分文字
-      let totalAmount = 0;
-      const negativeKeywords = ["折扣", "扣除", "減", "回饋", "折抵", "優惠", "退款", "找零"];
-
-      // 遍歷切分後的內容，索引 1, 3, 5... 為數字
-      for (let i = 1; i < segments.length; i += 2) {
-        const val = parseInt(segments[i]);
-        const prefix = segments[i - 1]; // 數字前方的文字
-        
-        // 如果前方文字包含負面關鍵字，則相減
-        const isNegative = negativeKeywords.some(kw => prefix.includes(kw));
-        totalAmount += isNegative ? -val : val;
+      // --- 1. 顯示 Loading 動畫 ---
+      try {
+        await fetch("https://api.line.me/v2/bot/chat/loading/start", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${config.channelAccessToken}`,
+          },
+          body: JSON.stringify({
+            chatId: userId,
+            loadingSeconds: 5
+          })
+        });
+      } catch (err) {
+        console.error("Loading Animation Error:", err);
       }
 
-      if (totalAmount === 0 && segments.length <= 1) continue; // 沒抓到數字則跳過
+      // --- 2. 金額與內容解析 (強化型明細拆解) ---
+      const segments = text.split(/(\d+)/); 
+      let totalAmount = 0;
+      const parsedItems: { name: string; price: number }[] = [];
+      const negativeKeywords = ["折扣", "扣除", "減", "回饋", "折抵", "優惠", "退款", "找零"];
+
+      for (let i = 1; i < segments.length; i += 2) {
+        const val = parseInt(segments[i]);
+        let name = segments[i - 1].trim();
+        if (!name && i === 1) name = "一般支出";
+        if (!name) name = "項目 " + Math.floor(i/2 + 1);
+        
+        const isNegative = negativeKeywords.some(kw => name.includes(kw));
+        const price = isNegative ? -val : val;
+        totalAmount += price;
+        parsedItems.push({ name, price });
+      }
+
+      if (totalAmount === 0 && segments.length <= 1) continue; 
 
       const amount = Math.abs(totalAmount);
-      const categoryInput = text.replace(/\d+/g, "").trim() || "其他";
+      const categoryInput = parsedItems[0]?.name || "其他";
       const finalDateStr = dateStr;
 
       try {
@@ -107,43 +127,180 @@ export async function POST(req: Request) {
         const catSnapshot = await db.collection("categories").where("userId", "==", userId).get();
         const userCats = catSnapshot.docs.map(doc => doc.data());
         
-        // 優先比對名稱，再比對關鍵字
         const matchedCat = userCats.find(c => c.name === categoryInput) || 
                            userCats.find(c => c.keywords && c.keywords.some((k: string) => categoryInput.toUpperCase().includes(k.toUpperCase())));
 
         const finalCategory = matchedCat ? matchedCat.name : "其他";
         const icon = matchedCat ? (matchedCat.icon || "💰") : "💰";
-        const finalRemark = categoryInput;
 
-        // 判斷是否為收入
         const incomeKeywords = ["收入", "薪資", "獎金", "利息", "中獎", "投資"];
-        // 如果運算結果是負數 (例如：退款 100)，則視為收入
         const isIncome = totalAmount < 0 || (matchedCat?.isIncome || incomeKeywords.some(kw => categoryInput.includes(kw)));
 
         const expenseData: any = {
           userId,
           amount,
           date: finalDateStr,
-          note: finalRemark,
+          note: text,
           category: finalCategory,
           icon: icon,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           matched: false,
           originalText: event.message.text,
           isIncome,
-          items: [{ name: finalRemark, price: amount }]
+          items: parsedItems
         };
 
-        await db.collection("manual_expenses").add(expenseData);
+        const docRef = await db.collection("manual_expenses").add(expenseData);
 
         if ("replyToken" in event && event.replyToken) {
+          const liffUrl = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}/trade?id=${docRef.id}`;
+
           await client.replyMessage({
             replyToken: event.replyToken,
             messages: [
               {
-                type: "text",
-                text: `✅ 已記錄${isIncome ? "收入" : "支出"}：${amount} 元\n📅 日期：${finalDateStr}\n🏷️ 項目：${categoryInput}\n📁 分類：${finalCategory}`,
-              },
+                type: "flex",
+                altText: `✅ 已記錄${isIncome ? "收入" : "支出"}：${amount} 元`,
+                contents: {
+                  type: "bubble",
+                  size: "md",
+                  header: {
+                    type: "box",
+                    layout: "vertical",
+                    backgroundColor: isIncome ? "#F0FDF4" : "#FDF2F2",
+                    paddingAll: "lg",
+                    contents: [
+                      {
+                        type: "text",
+                        text: `✅ 已記錄${isIncome ? "收入" : "支出"}`,
+                        weight: "bold",
+                        size: "sm",
+                        color: isIncome ? "#16A34A" : "#DC2626"
+                      }
+                    ]
+                  },
+                  body: {
+                    type: "box",
+                    layout: "vertical",
+                    contents: [
+                      {
+                        type: "box",
+                        layout: "horizontal",
+                        contents: [
+                          {
+                            type: "text",
+                            text: finalCategory,
+                            weight: "bold",
+                            size: "xl",
+                            flex: 0
+                          },
+                          {
+                            type: "text",
+                            text: icon,
+                            size: "xl",
+                            margin: "md"
+                          }
+                        ]
+                      },
+                      {
+                        type: "text",
+                        text: finalDateStr,
+                        size: "xs",
+                        color: "#9CA3AF",
+                        margin: "sm"
+                      },
+                      {
+                        type: "box",
+                        layout: "vertical",
+                        margin: "lg",
+                        spacing: "sm",
+                        contents: parsedItems.map(item => ({
+                          type: "box",
+                          layout: "horizontal",
+                          contents: [
+                            {
+                              type: "text",
+                              text: item.name,
+                              size: "xs",
+                              color: "#6B7280",
+                              flex: 4
+                            },
+                            {
+                              type: "text",
+                              text: `${item.price > 0 ? "" : ""}${item.price.toLocaleString()}`,
+                              size: "xs",
+                              color: item.price < 0 ? "#DC2626" : "#111827",
+                              align: "end",
+                              flex: 2,
+                              weight: "bold"
+                            }
+                          ]
+                        }))
+                      },
+                      {
+                        type: "separator",
+                        margin: "md"
+                      },
+                      {
+                        type: "box",
+                        layout: "horizontal",
+                        margin: "md",
+                        contents: [
+                          {
+                            type: "text",
+                            text: "總計",
+                            size: "sm",
+                            weight: "bold",
+                            flex: 0
+                          },
+                          {
+                            type: "text",
+                            text: `$${amount.toLocaleString()}`,
+                            size: "lg",
+                            weight: "bold",
+                            align: "end",
+                            color: isIncome ? "#16A34A" : "#111827"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  footer: {
+                    type: "box",
+                    layout: "horizontal",
+                    spacing: "md",
+                    contents: [
+                      {
+                        type: "button",
+                        action: {
+                          type: "uri",
+                          label: "📝 編輯",
+                          uri: liffUrl
+                        },
+                        style: "secondary",
+                        height: "sm",
+                        color: "#F3F4F6"
+                      },
+                      {
+                        type: "button",
+                        action: {
+                          type: "uri",
+                          label: "🗑️ 刪除",
+                          uri: liffUrl // 目前刪除也導向詳情頁執行
+                        },
+                        style: "secondary",
+                        height: "sm",
+                        color: "#F3F4F6"
+                      }
+                    ]
+                  },
+                  styles: {
+                    footer: {
+                      separator: true
+                    }
+                  }
+                }
+              }
             ],
           });
         }
