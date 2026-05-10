@@ -15,7 +15,7 @@ export default function LandingPage() {
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
-  };
+  } as const;
 
   const staggerContainer = {
     hidden: { opacity: 0 },
@@ -23,7 +23,7 @@ export default function LandingPage() {
       opacity: 1,
       transition: { staggerChildren: 0.2 }
     }
-  };
+  } as const;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F8F7F4] dark:bg-[#050505] text-[#1A1A1A] dark:text-[#E5E5E5] selection:bg-primary/20">
