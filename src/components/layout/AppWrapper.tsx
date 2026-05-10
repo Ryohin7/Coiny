@@ -5,11 +5,12 @@ import BottomNav from "./BottomNav";
 
 export default function AppWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLanding = pathname === "/";
+  const publicPages = ["/", "/faq", "/articles"];
+  const isPublicPage = publicPages.includes(pathname) || pathname.startsWith("/articles/");
 
-  if (isLanding) {
+  if (isPublicPage) {
     return (
-      <div className="w-full min-h-screen relative flex flex-col">
+      <div className="w-full min-h-screen relative flex flex-col bg-[#F8F7F4] dark:bg-[#050505]">
         {children}
       </div>
     );
