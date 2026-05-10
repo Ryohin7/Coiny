@@ -78,33 +78,12 @@ export async function POST(req: Request) {
 
       const dateStr = targetDate.toISOString().split("T")[0].replace(/-/g, "/");
 
-      // --- AI 測試區塊 (Pro 會員專屬) ---
-      let aiResult = null;
-      if (process.env.AI_ENABLED === "true" && userIsPro) {
-        const { parseWithAI } = await import("@/lib/services/ai-parser");
-        aiResult = await parseWithAI(event.message.text);
-      }
-      // --------------------------------
-
-      // 2. 金額與內容解析
-      let amount: number;
-      let categoryInput: string;
-      let finalDateStr = dateStr;
-      let isIncomeFallback = false;
-
-      if (aiResult) {
-        // 使用 AI 解析結果
-        amount = aiResult.amount;
-        categoryInput = aiResult.note || aiResult.category;
-        finalDateStr = aiResult.date || dateStr;
-        isIncomeFallback = aiResult.isIncome;
-      } else {
-        // 回退至原本的正規表達式解析
-        const amountMatch = text.match(/(\d+)/);
-        if (!amountMatch) continue; 
-        amount = parseInt(amountMatch[0]);
-        categoryInput = text.replace(amountMatch[0], "").trim() || "其他";
-      }
+      // 2. 金額與內容解析 (純 Regex 解析)
+      const amountMatch = text.match(/(\d+)/);
+      if (!amountMatch) continue; 
+      const amount = parseInt(amountMatch[0]);
+      const categoryInput = text.replace(amountMatch[0], "").trim() || "其他";
+      const finalDateStr = dateStr;
 
       try {
         const db = getDb();
@@ -124,7 +103,7 @@ export async function POST(req: Request) {
 
         // 判斷是否為收入
         const incomeKeywords = ["收入", "薪資", "獎金", "利息", "中獎", "投資"];
-        const isIncome = aiResult ? isIncomeFallback : (matchedCat?.isIncome || incomeKeywords.some(kw => categoryInput.includes(kw)));
+        const isIncome = (matchedCat?.isIncome || incomeKeywords.some(kw => categoryInput.includes(kw)));
 
         const expenseData: any = {
           userId,
@@ -137,7 +116,7 @@ export async function POST(req: Request) {
           matched: false,
           originalText: event.message.text,
           isIncome,
-          items: aiResult?.items || [{ name: finalRemark, price: amount }]
+          items: [{ name: finalRemark, price: amount }]
         };
 
         await db.collection("manual_expenses").add(expenseData);
@@ -148,7 +127,7 @@ export async function POST(req: Request) {
             messages: [
               {
                 type: "text",
-                text: `✅ 已記錄${isIncome ? "收入" : "支出"}：${amount} 元\n📅 日期：${finalDateStr}\n🏷️ 項目：${categoryInput}\n📁 分類：${finalCategory}${aiResult ? "\n🤖 (由 AI 解析)" : ""}`,
+                text: `✅ 已記錄${isIncome ? "收入" : "支出"}：${amount} 元\n📅 日期：${finalDateStr}\n🏷️ 項目：${categoryInput}\n📁 分類：${finalCategory}`,
               },
             ],
           });

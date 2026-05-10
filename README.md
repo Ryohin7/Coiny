@@ -70,8 +70,6 @@ npm run dev
 - **待確認發票 API**: `src/app/api/invoices/pending/route.ts` (前端顯示對帳按鈕的資料來源)
 - **確認匯入 API**: `src/app/api/invoices/confirm/route.ts` (使用者點擊匯入後的寫入邏輯)
 
-### 🧠 智能分析相關
-- **AI 解析服務**: `src/lib/services/ai-parser.ts` (呼叫 AI 進行自然語言記帳解析)
 - **商店與分類識別**: `src/lib/services/classifier.ts` (統編識別、關鍵字分類匹配)
 
 ### 💻 介面與資料管理
