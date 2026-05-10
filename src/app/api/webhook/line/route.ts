@@ -241,13 +241,14 @@ export async function POST(req: Request) {
                         }))
                       },
                       {
+                        type: "separator",
+                        margin: "xxl",
+                        color: "#F3F4F6"
+                      },
+                      {
                         type: "box",
                         layout: "horizontal",
-                        margin: "xxl",
-                        paddingTop: "20px",
-                        borderWidth: "1px",
-                        borderColor: "#F3F4F6",
-                        borderTop: "1px",
+                        paddingTop: "16px",
                         contents: [
                           {
                             type: "text",
