@@ -78,11 +78,25 @@ export async function POST(req: Request) {
 
       const dateStr = targetDate.toISOString().split("T")[0].replace(/-/g, "/");
 
-      // 2. 金額與內容解析 (純 Regex 解析)
-      const amountMatch = text.match(/(\d+)/);
-      if (!amountMatch) continue; 
-      const amount = parseInt(amountMatch[0]);
-      const categoryInput = text.replace(amountMatch[0], "").trim() || "其他";
+      // 2. 金額與內容解析 (強化型 Regex 運算)
+      const segments = text.split(/(\d+)/); // 按數字切分文字
+      let totalAmount = 0;
+      const negativeKeywords = ["折扣", "扣除", "減", "回饋", "折抵", "優惠", "退款", "找零"];
+
+      // 遍歷切分後的內容，索引 1, 3, 5... 為數字
+      for (let i = 1; i < segments.length; i += 2) {
+        const val = parseInt(segments[i]);
+        const prefix = segments[i - 1]; // 數字前方的文字
+        
+        // 如果前方文字包含負面關鍵字，則相減
+        const isNegative = negativeKeywords.some(kw => prefix.includes(kw));
+        totalAmount += isNegative ? -val : val;
+      }
+
+      if (totalAmount === 0 && segments.length <= 1) continue; // 沒抓到數字則跳過
+
+      const amount = Math.abs(totalAmount);
+      const categoryInput = text.replace(/\d+/g, "").trim() || "其他";
       const finalDateStr = dateStr;
 
       try {
@@ -103,7 +117,8 @@ export async function POST(req: Request) {
 
         // 判斷是否為收入
         const incomeKeywords = ["收入", "薪資", "獎金", "利息", "中獎", "投資"];
-        const isIncome = (matchedCat?.isIncome || incomeKeywords.some(kw => categoryInput.includes(kw)));
+        // 如果運算結果是負數 (例如：退款 100)，則視為收入
+        const isIncome = totalAmount < 0 || (matchedCat?.isIncome || incomeKeywords.some(kw => categoryInput.includes(kw)));
 
         const expenseData: any = {
           userId,
