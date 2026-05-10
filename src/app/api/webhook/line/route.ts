@@ -254,7 +254,7 @@ export async function POST(req: Request) {
                             type: "text",
                             text: "TOTAL",
                             size: "xs",
-                            weight: "black",
+                            weight: "bold",
                             color: "#9CA3AF",
                             gravity: "center"
                           },
@@ -262,7 +262,7 @@ export async function POST(req: Request) {
                             type: "text",
                             text: `${amount.toLocaleString()}`,
                             size: "xxl",
-                            weight: "black",
+                            weight: "bold",
                             align: "end",
                             color: "#2563EB"
                           }
