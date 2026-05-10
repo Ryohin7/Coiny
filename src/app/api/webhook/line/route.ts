@@ -160,35 +160,35 @@ export async function POST(req: Request) {
             messages: [
               {
                 type: "flex",
-                altText: `RECORDED: ${finalCategory} ${amount.toLocaleString()}`,
+                altText: `已紀錄：${finalCategory} ${amount.toLocaleString()}`,
                 contents: {
                   type: "bubble",
                   size: "mega",
                   header: {
                     type: "box",
                     layout: "vertical",
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: "#F8F7F4",
                     paddingTop: "24px",
                     paddingBottom: "12px",
                     contents: [
                       {
                         type: "text",
-                        text: isIncome ? "INCOME RECORDED" : "EXPENSE RECORDED",
+                        text: isIncome ? "已紀錄收入" : "已紀錄支出",
                         weight: "bold",
                         size: "xs",
-                        color: "#2563EB"
+                        color: "#E9720C"
                       },
                       {
                         type: "separator",
                         margin: "md",
-                        color: "#2563EB"
+                        color: "#E9720C"
                       }
                     ]
                   },
                   body: {
                     type: "box",
                     layout: "vertical",
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: "#F8F7F4",
                     contents: [
                       {
                         type: "box",
@@ -199,7 +199,7 @@ export async function POST(req: Request) {
                             text: finalCategory.toUpperCase(),
                             weight: "bold",
                             size: "xxl",
-                            color: "#111827",
+                            color: "#2d2d2d",
                             flex: 1
                           }
                         ]
@@ -208,7 +208,7 @@ export async function POST(req: Request) {
                         type: "text",
                         text: finalDateStr,
                         size: "xs",
-                        color: "#9CA3AF",
+                        color: "#7a6a5e",
                         margin: "sm",
                         weight: "bold"
                       },
@@ -225,14 +225,14 @@ export async function POST(req: Request) {
                               type: "text",
                               text: item.name,
                               size: "sm",
-                              color: "#4B5563",
+                              color: "#7a6a5e",
                               flex: 4
                             },
                             {
                               type: "text",
                               text: item.price.toLocaleString(),
                               size: "sm",
-                              color: "#111827",
+                              color: "#2d2d2d",
                               align: "end",
                               flex: 2,
                               weight: "bold"
@@ -252,10 +252,10 @@ export async function POST(req: Request) {
                         contents: [
                           {
                             type: "text",
-                            text: "TOTAL",
+                            text: "總計",
                             size: "xs",
                             weight: "bold",
-                            color: "#9CA3AF",
+                            color: "#7a6a5e",
                             gravity: "center"
                           },
                           {
@@ -264,7 +264,7 @@ export async function POST(req: Request) {
                             size: "xxl",
                             weight: "bold",
                             align: "end",
-                            color: "#2563EB"
+                            color: "#E9720C"
                           }
                         ]
                       }
@@ -274,19 +274,19 @@ export async function POST(req: Request) {
                     type: "box",
                     layout: "horizontal",
                     spacing: "md",
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: "#F8F7F4",
                     paddingTop: "12px",
                     contents: [
                       {
                         type: "button",
                         action: {
                           type: "uri",
-                          label: "EDIT DETAILS",
+                          label: "編輯明細",
                           uri: liffUrl
                         },
                         style: "primary",
                         height: "md",
-                        color: "#2563EB"
+                        color: "#E9720C"
                       }
                     ]
                   },
