@@ -163,7 +163,7 @@ export async function POST(req: Request) {
                 altText: `✅ 已記錄${isIncome ? "收入" : "支出"}：${amount} 元`,
                 contents: {
                   type: "bubble",
-                  size: "md",
+                  size: "mega",
                   header: {
                     type: "box",
                     layout: "vertical",
