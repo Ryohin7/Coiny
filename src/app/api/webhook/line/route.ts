@@ -174,7 +174,7 @@ export async function POST(req: Request) {
                       {
                         type: "text",
                         text: isIncome ? "INCOME RECORDED" : "EXPENSE RECORDED",
-                        weight: "black",
+                        weight: "bold",
                         size: "xs",
                         color: "#2563EB",
                         tracking: "0.2em"
@@ -198,7 +198,7 @@ export async function POST(req: Request) {
                           {
                             type: "text",
                             text: finalCategory.toUpperCase(),
-                            weight: "black",
+                            weight: "bold",
                             size: "xxl",
                             color: "#111827",
                             flex: 1
