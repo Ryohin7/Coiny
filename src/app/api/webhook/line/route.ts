@@ -160,28 +160,36 @@ export async function POST(req: Request) {
             messages: [
               {
                 type: "flex",
-                altText: `✅ 已記錄${isIncome ? "收入" : "支出"}：${amount} 元`,
+                altText: `RECORDED: ${finalCategory} ${amount.toLocaleString()}`,
                 contents: {
                   type: "bubble",
                   size: "mega",
                   header: {
                     type: "box",
                     layout: "vertical",
-                    backgroundColor: isIncome ? "#F0FDF4" : "#FDF2F2",
-                    paddingAll: "lg",
+                    backgroundColor: "#FFFFFF",
+                    paddingTop: "24px",
+                    paddingBottom: "12px",
                     contents: [
                       {
                         type: "text",
-                        text: `✅ 已記錄${isIncome ? "收入" : "支出"}`,
-                        weight: "bold",
-                        size: "sm",
-                        color: isIncome ? "#16A34A" : "#DC2626"
+                        text: isIncome ? "INCOME RECORDED" : "EXPENSE RECORDED",
+                        weight: "black",
+                        size: "xs",
+                        color: "#2563EB",
+                        tracking: "0.2em"
+                      },
+                      {
+                        type: "separator",
+                        margin: "md",
+                        color: "#2563EB"
                       }
                     ]
                   },
                   body: {
                     type: "box",
                     layout: "vertical",
+                    backgroundColor: "#FFFFFF",
                     contents: [
                       {
                         type: "box",
@@ -189,16 +197,11 @@ export async function POST(req: Request) {
                         contents: [
                           {
                             type: "text",
-                            text: finalCategory,
-                            weight: "bold",
-                            size: "xl",
-                            flex: 0
-                          },
-                          {
-                            type: "text",
-                            text: icon,
-                            size: "xl",
-                            margin: "md"
+                            text: finalCategory.toUpperCase(),
+                            weight: "black",
+                            size: "xxl",
+                            color: "#111827",
+                            flex: 1
                           }
                         ]
                       },
@@ -207,13 +210,14 @@ export async function POST(req: Request) {
                         text: finalDateStr,
                         size: "xs",
                         color: "#9CA3AF",
-                        margin: "sm"
+                        margin: "sm",
+                        weight: "bold"
                       },
                       {
                         type: "box",
                         layout: "vertical",
-                        margin: "lg",
-                        spacing: "sm",
+                        margin: "xxl",
+                        spacing: "md",
                         contents: parsedItems.map(item => ({
                           type: "box",
                           layout: "horizontal",
@@ -221,15 +225,15 @@ export async function POST(req: Request) {
                             {
                               type: "text",
                               text: item.name,
-                              size: "xs",
-                              color: "#6B7280",
+                              size: "sm",
+                              color: "#4B5563",
                               flex: 4
                             },
                             {
                               type: "text",
-                              text: `${item.price > 0 ? "" : ""}${item.price.toLocaleString()}`,
-                              size: "xs",
-                              color: item.price < 0 ? "#DC2626" : "#111827",
+                              text: item.price.toLocaleString(),
+                              size: "sm",
+                              color: "#111827",
                               align: "end",
                               flex: 2,
                               weight: "bold"
@@ -238,28 +242,29 @@ export async function POST(req: Request) {
                         }))
                       },
                       {
-                        type: "separator",
-                        margin: "md"
-                      },
-                      {
                         type: "box",
                         layout: "horizontal",
-                        margin: "md",
+                        margin: "xxl",
+                        paddingTop: "20px",
+                        borderWidth: "1px",
+                        borderColor: "#F3F4F6",
+                        borderTop: "1px",
                         contents: [
                           {
                             type: "text",
-                            text: "總計",
-                            size: "sm",
-                            weight: "bold",
-                            flex: 0
+                            text: "TOTAL",
+                            size: "xs",
+                            weight: "black",
+                            color: "#9CA3AF",
+                            gravity: "center"
                           },
                           {
                             type: "text",
-                            text: `$${amount.toLocaleString()}`,
-                            size: "lg",
-                            weight: "bold",
+                            text: `${amount.toLocaleString()}`,
+                            size: "xxl",
+                            weight: "black",
                             align: "end",
-                            color: isIncome ? "#16A34A" : "#111827"
+                            color: "#2563EB"
                           }
                         ]
                       }
@@ -269,34 +274,25 @@ export async function POST(req: Request) {
                     type: "box",
                     layout: "horizontal",
                     spacing: "md",
+                    backgroundColor: "#FFFFFF",
+                    paddingTop: "12px",
                     contents: [
                       {
                         type: "button",
                         action: {
                           type: "uri",
-                          label: "📝 編輯",
+                          label: "EDIT DETAILS",
                           uri: liffUrl
                         },
-                        style: "secondary",
-                        height: "sm",
-                        color: "#F3F4F6"
-                      },
-                      {
-                        type: "button",
-                        action: {
-                          type: "uri",
-                          label: "🗑️ 刪除",
-                          uri: liffUrl // 目前刪除也導向詳情頁執行
-                        },
-                        style: "secondary",
-                        height: "sm",
-                        color: "#F3F4F6"
+                        style: "primary",
+                        height: "md",
+                        color: "#2563EB"
                       }
                     ]
                   },
                   styles: {
                     footer: {
-                      separator: true
+                      separator: false
                     }
                   }
                 }
